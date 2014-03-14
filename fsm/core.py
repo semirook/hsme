@@ -242,28 +242,28 @@ class HSMERunner(object):
             if hsme_proxy.src.name in self.processing_map:
                 src_callbacks = self.processing_map[hsme_proxy.src.name]
             if 'on_exit' in src_callbacks:
-                callback = self._prepare_callback(
+                callback_exit = self._prepare_callback(
                     src_callbacks['on_exit'],
                     hsme_proxy.src.name, 'on_exit',
                 )
-                callback(hsme_proxy)
+                callback_exit(hsme_proxy)
             if 'on_change' in hsme_proxy.src.callbacks:
-                callback = self._prepare_callback(
+                callback_change = self._prepare_callback(
                     src_callbacks['on_change'],
                     hsme_proxy.src.name, 'on_change',
                 )
-                callback(hsme_proxy)
+                callback_change(hsme_proxy)
 
         if hsme_proxy.dst:
             dst_callbacks = hsme_proxy.dst.callbacks
             if hsme_proxy.dst.name in self.processing_map:
                 dst_callbacks = self.processing_map[hsme_proxy.dst.name]
             if 'on_enter' in dst_callbacks:
-                callback = self._prepare_callback(
+                callback_enter = self._prepare_callback(
                     dst_callbacks['on_enter'],
                     hsme_proxy.dst.name, 'on_enter',
                 )
-                callback(hsme_proxy)
+                callback_enter(hsme_proxy)
 
             self.hsme._current_state = hsme_proxy.dst
             self._record_history(hsme_proxy, 'OK')
@@ -272,11 +272,11 @@ class HSMERunner(object):
                 self.flush()
 
             if 'on_change' in dst_callbacks:
-                callback = self._prepare_callback(
+                callback_change = self._prepare_callback(
                     dst_callbacks['on_change'],
                     hsme_proxy.dst.name, 'on_change',
                 )
-                callback(hsme_proxy)
+                callback_change(hsme_proxy)
 
     def _record_history(self, hsme_proxy, status):
         self.hsme._history.append(
