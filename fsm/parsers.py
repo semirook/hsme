@@ -92,7 +92,7 @@ class HSMEDictsParser(HSMEParserBase):
 class HSMEXMLParser(HSMEParserBase):
 
     def __init__(self, doc, doc_id=None, datamodel=None):
-        super(HSMEXMLParser, self).__init__(doc, doc_id=None, datamodel=None)
+        super(HSMEXMLParser, self).__init__(doc, doc_id, datamodel)
         if isinstance(doc, basestring):
             self.doc = open(doc, 'rb')
 
