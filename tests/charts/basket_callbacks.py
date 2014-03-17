@@ -5,10 +5,6 @@ def on_enter_in_recalculation(fsm_proxy):
     pass
 
 
-def on_enter_in_recalculation_2(fsm_proxy):
-    pass
-
-
 def on_change_in_recalculation(fsm_proxy):
     pass
 

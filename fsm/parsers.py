@@ -23,6 +23,15 @@ class HSMEState(object):
     def __repr__(self):
         return '<HSMEState: %s>' % self.name
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, HSMEState)
+            and self.name == other.name
+            and self.events == other.events
+            and self.is_initial == other.is_initial
+            and self.is_final == other.is_final
+        )
+
 
 class HSMEStateChart(object):
 

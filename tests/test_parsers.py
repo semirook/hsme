@@ -1,7 +1,8 @@
 # coding: utf-8
 import os
-from fsm.parsers import HSMEXMLParser
 from unittest import TestCase
+from fsm.parsers import HSMEXMLParser, HSMEDictsParser
+from .charts.basket import BASKET_CHART
 
 
 def get_xml_path():
@@ -131,3 +132,58 @@ class TestXMLParser(TestCase):
             if s.name == 'in_basket_empty'
         ][0]
         self.assertFalse(in_basket_empty.callbacks)
+
+
+class TestParsersEquality(TestCase):
+
+    def test_dict_and_xml(self):
+        path = get_xml_path()
+        table_from_xml = HSMEXMLParser(path, doc_id='basket').parse()
+        table_from_dict = HSMEDictsParser(BASKET_CHART, doc_id='basket').parse()
+
+        self.assertEqual(table_from_xml._id, table_from_dict._id)
+        self.assertEqual(table_from_xml._init_state, table_from_dict._init_state)
+        self.assertEqual(table_from_xml._final_state, table_from_dict._final_state)
+
+        self.assertTrue(sorted(table_from_dict._statechart) == sorted(table_from_xml._statechart))
+        sorted_events = sorted(table_from_dict._statechart)
+
+        for event in sorted_events:
+            dict_trans_map = table_from_dict._statechart[event]
+            xml_trans_map = table_from_xml._statechart[event]
+
+            dict_src_names = sorted(x.name for x in dict_trans_map.keys())
+            xml_src_names = sorted(x.name for x in xml_trans_map.keys())
+            self.assertListEqual(dict_src_names, xml_src_names)
+
+            dict_dst_names = sorted(x.name for x in dict_trans_map.values())
+            xml_dst_names = sorted(x.name for x in xml_trans_map.values())
+            self.assertListEqual(dict_dst_names, xml_dst_names)
+
+            xml_src_events = sorted(x.events for x in xml_trans_map.keys())
+            dict_src_events = sorted(x.events for x in dict_trans_map.keys())
+            self.assertListEqual(dict_src_events, xml_src_events)
+
+            xml_dst_events = sorted(x.events for x in xml_trans_map.values())
+            dict_dst_events = sorted(x.events for x in dict_trans_map.values())
+            self.assertListEqual(dict_dst_events, xml_dst_events)
+
+        for event in sorted_events:
+            dict_trans_map = table_from_dict._statechart[event]
+            xml_trans_map = table_from_xml._statechart[event]
+
+            dict_src_states = sorted(dict_trans_map.keys())
+            xml_src_states = sorted(xml_trans_map.keys())
+            self.assertListEqual(dict_src_states, xml_src_states)
+            self.assertListEqual(
+                [x.events for x in dict_src_states],
+                [x.events for x in xml_src_states]
+            )
+
+            dict_dst_states = sorted(dict_trans_map.values())
+            xml_dst_states = sorted(xml_trans_map.values())
+            self.assertListEqual(dict_dst_states, xml_dst_states)
+            self.assertListEqual(
+                [x.events for x in dict_dst_states],
+                [x.events for x in xml_dst_states]
+            )

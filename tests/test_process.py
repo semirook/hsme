@@ -12,6 +12,7 @@ from fsm.core import (
 from fsm.parsers import HSMEDictsParser, HSMEXMLParser
 from .charts.checkout import SIMPLE_CHECKOUT
 from .charts.checkout_callbacks import CUSTOM_CALLBACKS
+from .charts.basket_another_callbacks import on_enter_in_recalculation_another
 from .factories import Basket, Product
 
 
@@ -177,20 +178,18 @@ class TestCallbacks(unittest.TestCase):
         self.assertTrue(exit_mock.called)
         self.assertTrue(change_b_mock.called)
 
-    @patch('tests.charts.basket_callbacks.on_enter_in_recalculation_2')
     @patch('tests.charts.basket_callbacks.on_enter_in_recalculation')
-    def test_registered_callbacks(self, enter_mock_1, enter_mock_2):
+    def test_registered_callbacks(self, enter_mock_1):
         hsme = HSMERunner()
         xml_path = get_xml_path()
         checkout_sm = HSMEXMLParser(xml_path).parse()
         hsme.load(checkout_sm, autosave=False)
         hsme.register_processing_map({
             'in_recalculation': {
-                'on_enter': 'tests.charts.basket_callbacks.on_enter_in_recalculation_2'
+                'on_enter': on_enter_in_recalculation_another
             }
         })
         hsme.start(autosave=False)
 
         hsme.send('do_add_to_basket', autosave=False)
         self.assertFalse(enter_mock_1.called)
-        self.assertTrue(enter_mock_2.called)
