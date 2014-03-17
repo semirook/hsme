@@ -241,23 +241,19 @@ class HSMERunner(object):
             src_callbacks = hsme_proxy.src.callbacks
             if hsme_proxy.src.name in self.processing_map:
                 src_callbacks = self.processing_map[hsme_proxy.src.name]
+
             if 'on_exit' in src_callbacks:
                 callback_exit = self._prepare_callback(
                     src_callbacks['on_exit'],
                     hsme_proxy.src.name, 'on_exit',
                 )
                 callback_exit(hsme_proxy)
-            if 'on_change' in hsme_proxy.src.callbacks:
-                callback_change = self._prepare_callback(
-                    src_callbacks['on_change'],
-                    hsme_proxy.src.name, 'on_change',
-                )
-                callback_change(hsme_proxy)
 
         if hsme_proxy.dst:
             dst_callbacks = hsme_proxy.dst.callbacks
             if hsme_proxy.dst.name in self.processing_map:
                 dst_callbacks = self.processing_map[hsme_proxy.dst.name]
+
             if 'on_enter' in dst_callbacks:
                 callback_enter = self._prepare_callback(
                     dst_callbacks['on_enter'],
