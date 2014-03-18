@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Использование &mdash; hsme 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="hsme 0.1 documentation" href="index.html" />
+    <link rel="prev" title="HSMERunner API" href="runner_api.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="runner_api.html" title="HSMERunner API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">hsme 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simple-usecase">
+<span id="id1"></span><h1>Использование<a class="headerlink" href="#simple-usecase" title="Permalink to this headline">¶</a></h1>
+<p>Рассмотрим пример работы с FSM на базе описанной в формате XML таблицы переходов <a class="footnote-reference" href="#x1" id="id2">[1]</a>.</p>
+<p>В наиболее простом случае, достаточно одного runner`а <a class="footnote-reference" href="#x2" id="id3">[2]</a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">hsme_runner</span> <span class="o">=</span> <span class="n">HSMERunner</span><span class="p">()</span>
+<span class="n">statechart</span> <span class="o">=</span> <span class="n">HSMEXMLParser</span><span class="p">(</span>
+    <span class="n">doc</span><span class="o">=</span><span class="s">&#39;path/to/basket.xml&#39;</span><span class="p">,</span>
+    <span class="n">doc_id</span><span class="o">=</span><span class="s">&#39;basket&#39;</span><span class="p">,</span>
+    <span class="n">datamodel</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+<span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+
+<span class="n">hsme_runner</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">statechart</span><span class="p">,</span> <span class="n">autosave</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">hsme_runner</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">autosave</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">hsme_runner</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;event_name&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;user&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">},</span> <span class="n">autosave</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="docutils footnote" frame="void" id="x1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td><a class="reference internal" href="xml_format.html#xml-format"><em>Описание таблицы переходов в XML</em></a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="x2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td><a class="reference internal" href="runner_api.html#runner-api"><em>HSMERunner API</em></a></td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="runner_api.html"
+                        title="previous chapter">HSMERunner API</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/simple_usecase.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="runner_api.html" title="HSMERunner API"
+             >previous</a> |</li>
+        <li><a href="index.html">hsme 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Roman Semirook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -51,13 +51,13 @@ class HSMEStateChart(object):
 class HSMEParserBase(object):
 
     def __init__(self, doc, doc_id=None, datamodel=None):
+        self.table = HSMEStateChart()
         self.doc = doc
         self.doc_id = doc_id or self.get_doc_id()
         self.datamodel = datamodel or {}
-        self.table = HSMEStateChart()
 
     def get_doc_id(self):
-        return hashlib.md5(repr(self.doc)).hexdigest()
+        return hashlib.md5(repr(self.table)).hexdigest()
 
     def _compose(self, events_map, states_map):
         for state_inst in states_map.itervalues():

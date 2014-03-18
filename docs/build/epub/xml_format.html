@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Описание таблицы переходов в XML</title>
+    
+    <link rel="stylesheet" href="_static/epub.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="HSME - реализация конечных автоматов для проекта Lotus"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">hsme 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="xml">
+<span id="xml-format"></span><h1>Описание таблицы переходов в XML</h1>
+<p>Реальный пример описания таблицы переходов с callback`ами для реализации логики компонента &#8220;Корзина&#8221;:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;scxml</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;state</span> <span class="na">id=</span><span class="s">&quot;in_recalculation&quot;</span> <span class="na">targetns=</span><span class="s">&quot;charts.basket_callbacks.in_recalculation&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;onentry</span> <span class="na">target=</span><span class="s">&quot;on_enter_in_recalculation&quot;</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;onchange</span> <span class="na">target=</span><span class="s">&quot;on_change_in_recalculation&quot;</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;onexit</span> <span class="na">target=</span><span class="s">&quot;on_exit_in_recalculation&quot;</span><span class="nt">/&gt;</span>
+
+        <span class="nt">&lt;state</span> <span class="na">id=</span><span class="s">&quot;in_basket_normal&quot;</span> <span class="na">targetns=</span><span class="s">&quot;charts.basket_callbacks.in_basket_normal&quot;</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;onentry</span> <span class="na">target=</span><span class="s">&quot;on_enter_in_basket_normal&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;onchange</span> <span class="na">target=</span><span class="s">&quot;on_change_in_basket_normal&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;onexit</span> <span class="na">target=</span><span class="s">&quot;on_exit_in_basket_normal&quot;</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_goto_in_basket_normal&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_add_to_basket&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_remove_product&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/state&gt;</span>
+
+        <span class="nt">&lt;state</span> <span class="na">id=</span><span class="s">&quot;in_basket_freeze&quot;</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_goto_in_basket_freeze&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_add_to_basket&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_remove_product&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/state&gt;</span>
+
+        <span class="nt">&lt;state</span> <span class="na">id=</span><span class="s">&quot;in_basket_empty&quot;</span> <span class="na">initial=</span><span class="s">&quot;true&quot;</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;transition</span> <span class="na">event=</span><span class="s">&quot;do_add_to_basket&quot;</span> <span class="na">next=</span><span class="s">&quot;in_recalculation&quot;</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/state&gt;</span>
+    <span class="nt">&lt;/state&gt;</span>
+
+<span class="nt">&lt;/scxml&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="id1">
+<h2>Базовые принципы и возможности предложенного формата</h2>
+<p>Формат описания является подмножеством стандарта <a class="reference external" href="http://www.w3.org/TR/scxml/">State Chart XML (SCXML)</a><span class="link-target"> [http://www.w3.org/TR/scxml/]</span> с некоторыми ограничениями и дополнениями. О них подробнее будет описано ниже.</p>
+<div class="section" id="state">
+<h3>&lt;state&gt;</h3>
+<p>Тег <strong>&lt;state&gt;</strong> описывает состояние конечного автомата (в данном случае – &#8220;in_recalculation&#8221;). Формальный список атрибутов:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="11%" />
+<col width="40%" />
+<col width="36%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Название</th>
+<th class="head">Обязательный</th>
+<th class="head">Значения</th>
+<th class="head">Описание</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">id</span></tt></td>
+<td>да</td>
+<td>любое корректное для Python имя, желательно
+соответствующее определённому соглашению
+(как вариант - приставка <cite>in_</cite> перед
+названием состояния)</td>
+<td>В терминах FSM, это название состояния,
+которое может принимать машина</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">initial</span></tt></td>
+<td>нет</td>
+<td>&#8220;true&#8221;, наличие атрибута определяющее</td>
+<td>Состояние, в которое машина переходит
+сразу же после запуска</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">final</span></tt></td>
+<td>нет</td>
+<td>&#8220;true&#8221;, наличие атрибута определяющее</td>
+<td>Индикатор конечного состояния машины</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">targetns</span></tt></td>
+<td>нет</td>
+<td>Полный путь к модулю с callback`ами состояния.
+Используется принятый в Python формат</td>
+<td>Используется для сокращения записей
+об источнике callback`ов состояния</td>
+</tr>
+</tbody>
+</table>
+<p>Тег <strong>&lt;state&gt;</strong> может включать в себя:</p>
+<ul class="simple">
+<li><strong>&lt;transition&gt;</strong> – описание возможных переходов в другие состояния (&#8220;входной алфавит&#8221; в терминах FSM или &#8220;список событий&#8221; в терминах HSME)</li>
+<li><strong>&lt;onentry&gt;</strong> – callback, срабатывающий <em>при попытке войти</em> в состояние</li>
+<li><strong>&lt;onchange&gt;</strong> – callback, срабатывающий <em>во время входа</em> в состояние</li>
+<li><strong>&lt;onexit&gt;</strong> – callback, срабатывающий во время <em>попытки выхода</em> из состояния</li>
+<li><strong>&lt;state&gt;</strong> – вложенное подсостояние, может встречаться 0 или более раз</li>
+</ul>
+</div>
+<div class="section" id="transition">
+<h3>&lt;transition&gt;</h3>
+<p>Тег <strong>&lt;transition&gt;</strong> описывает атрибутами <em>event</em> и <em>next</em>, по какому событию event в какое состояние next можно перейти из данного состояния:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;transition event=&quot;do_goto_in_basket_freeze&quot; next=&quot;in_recalculation&quot;/&gt;
+</pre></div>
+</div>
+<p>Может встречаться 0 и более раз в описании состояния.</p>
+</div>
+<div class="section" id="onentry">
+<h3>&lt;onentry&gt;</h3>
+<p>Тег <strong>&lt;onentry&gt;</strong> описывает атрибутом <em>target</em> имя функции callback`а на попытку входа в состояние. Значение <em>target</em> – полный путь к данной функции в python-стиле &#8220;пакет.модуль.функция&#8221;. Если в определении <em>&lt;state&gt;</em> был указан атрибут <em>targetns</em>, путь к функции можно опустить. Таким образом, запись:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_basket_normal&quot; targetns=&quot;charts.basket_callbacks.in_basket_normal&quot;&gt;
+    &lt;onentry target=&quot;on_enter_in_basket_normal&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>и:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_basket_normal&quot;&gt;
+    &lt;onentry target=&quot;charts.basket_callbacks.in_basket_normal.on_enter_in_basket_normal&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>абсолютно равнозначны.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Переход в состояние осуществляется только в случае успешной отработки логики <em>&lt;onentry&gt;</em>. Тег может быть указан только 1 раз в родительском <em>&lt;state&gt;</em>.</p>
+</div>
+</div>
+<div class="section" id="onchange">
+<h3>&lt;onchange&gt;</h3>
+<p>Тег <strong>&lt;onchange&gt;</strong> описывает атрибутом <em>target</em> имя функции callback`а состояния. Значение <em>target</em> – полный путь к данной функции в python-стиле &#8220;пакет.модуль.функция&#8221;. Если в определении <em>&lt;state&gt;</em> был указан атрибут <em>targetns</em>, путь к функции можно опустить. Таким образом, запись:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_basket_normal&quot; targetns=&quot;charts.basket_callbacks.in_basket_normal&quot;&gt;
+    &lt;onchange target=&quot;on_change_in_basket_normal&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>и:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_basket_normal&quot;&gt;
+    &lt;onchange target=&quot;charts.basket_callbacks.in_basket_normal.on_change_in_basket_normal&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>абсолютно равнозначны.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Тег может быть указан только 1 раз в родительском <em>&lt;state&gt;</em>.</p>
+</div>
+</div>
+<div class="section" id="onexit">
+<h3>&lt;onexit&gt;</h3>
+<p>Тег <strong>&lt;onexit&gt;</strong> описывает атрибутом <em>target</em> имя функции callback`а на попытку выхода из состояния. Значение <em>target</em> – полный путь к данной функции в python-стиле &#8220;пакет.модуль.функция&#8221;. Если в определении <em>&lt;state&gt;</em> был указан атрибут <em>targetns</em>, путь к функции можно опустить. Таким образом, запись:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_basket_normal&quot; targetns=&quot;charts.basket_callbacks.in_basket_normal&quot;&gt;
+    &lt;onexit target=&quot;on_exit_in_basket_normal&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>и:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_basket_normal&quot;&gt;
+    &lt;onexit target=&quot;charts.basket_callbacks.in_basket_normal.on_exit_in_basket_normal&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>абсолютно равнозначны.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">В случае неудачи отработки логики <em>&lt;onexit&gt;</em>, выхода из состояния не происходит. Тег может быть указан только 1 раз в родительском <em>&lt;state&gt;</em>.</p>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>&lt;state&gt;</h3>
+<p>Вложенные состояния могут использоваться для визуальной группировки по логическому принципу. Состояние, которое включает в себя вложенные состояния является мета-состоянием. Помимо структурной (визуальной) группировки на уровне описания, для meta-состояния создаётся набор служебных событий для переходов во вложенные состояния.</p>
+<p>Для мета-состояния &#8220;in_recalculation&#8221;, на этапе парсинга во внутреннее представление, создаются служебные события вида <em>do_goto_</em> + <em>имя_вложенного_состояния</em>. Записи вида:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_recalculation&quot; targetns=&quot;charts.basket_callbacks.in_recalculation&quot;&gt;
+    &lt;onentry target=&quot;on_enter_in_recalculation&quot;/&gt;
+    &lt;onchange target=&quot;on_change_in_recalculation&quot;/&gt;
+    &lt;onexit target=&quot;on_exit_in_recalculation&quot;/&gt;
+
+    &lt;state id=&quot;in_basket_normal&quot; targetns=&quot;charts.basket_callbacks.in_basket_normal&quot;&gt;
+        &lt;onentry target=&quot;on_enter_in_basket_normal&quot;/&gt;
+        &lt;onchange target=&quot;on_change_in_basket_normal&quot;/&gt;
+        &lt;onexit target=&quot;on_exit_in_basket_normal&quot;/&gt;
+
+        &lt;transition event=&quot;do_goto_in_basket_normal&quot; next=&quot;in_recalculation&quot;/&gt;
+        &lt;transition event=&quot;do_add_to_basket&quot; next=&quot;in_recalculation&quot;/&gt;
+        &lt;transition event=&quot;do_remove_product&quot; next=&quot;in_recalculation&quot;/&gt;
+    &lt;/state&gt;
+
+    &lt;state id=&quot;in_basket_empty&quot; initial=&quot;true&quot;&gt;
+        &lt;transition event=&quot;do_add_to_basket&quot; next=&quot;in_recalculation&quot;/&gt;
+    &lt;/state&gt;
+
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>и:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;state id=&quot;in_recalculation&quot; targetns=&quot;charts.basket_callbacks.in_recalculation&quot;&gt;
+    &lt;onentry target=&quot;on_enter_in_recalculation&quot;/&gt;
+    &lt;onchange target=&quot;on_change_in_recalculation&quot;/&gt;
+    &lt;onexit target=&quot;on_exit_in_recalculation&quot;/&gt;
+
+    &lt;transition event=&quot;do_goto_in_basket_normal&quot; next=&quot;in_recalculation&quot;/&gt;
+    &lt;transition event=&quot;do_goto_in_basket_empty&quot; next=&quot;in_recalculation&quot;/&gt;
+
+&lt;/state&gt;
+
+&lt;state id=&quot;in_basket_normal&quot; targetns=&quot;charts.basket_callbacks.in_basket_normal&quot;&gt;
+    &lt;onentry target=&quot;on_enter_in_basket_normal&quot;/&gt;
+    &lt;onchange target=&quot;on_change_in_basket_normal&quot;/&gt;
+    &lt;onexit target=&quot;on_exit_in_basket_normal&quot;/&gt;
+
+    &lt;transition event=&quot;do_goto_in_basket_normal&quot; next=&quot;in_recalculation&quot;/&gt;
+    &lt;transition event=&quot;do_add_to_basket&quot; next=&quot;in_recalculation&quot;/&gt;
+    &lt;transition event=&quot;do_remove_product&quot; next=&quot;in_recalculation&quot;/&gt;
+&lt;/state&gt;
+
+&lt;state id=&quot;in_basket_empty&quot; initial=&quot;true&quot;&gt;
+    &lt;transition event=&quot;do_add_to_basket&quot; next=&quot;in_recalculation&quot;/&gt;
+&lt;/state&gt;
+</pre></div>
+</div>
+<p>абсолютно равнозначны.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Callback`и и пространство имён callback`ов мета-состояния не распространяются на вложенные состояния. Описания тегов &lt;onchange&gt;, &lt;onentry&gt;, &lt;onexit&gt; и state-атрибута targetns не наследуются.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2014, Roman Semirook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
