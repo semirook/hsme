@@ -18,9 +18,7 @@ BASKET_CHART = [
     {
         'id': 'in_basket_freeze',
         'events': {
-            'do_goto_in_basket_freeze': 'in_recalculation',
-            'do_add_to_basket': 'in_recalculation',
-            'do_remove_product': 'in_recalculation',
+            'do_unfreeze': 'in_recalculation',
         },
     },
     {

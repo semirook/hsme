@@ -14,9 +14,7 @@
 
         <state id="in_basket_freeze">
             <onentry target="tests.charts.basket_callbacks.on_enter_in_basket_freeze"/>
-            <transition event="do_goto_in_basket_freeze" next="in_recalculation"/>
-            <transition event="do_add_to_basket" next="in_recalculation"/>
-            <transition event="do_remove_product" next="in_recalculation"/>
+            <transition event="do_unfreeze" next="in_recalculation"/>
         </state>
 
         <state id="in_basket_empty" initial="true">

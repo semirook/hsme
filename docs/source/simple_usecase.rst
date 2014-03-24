@@ -10,11 +10,11 @@
 .. code-block:: python
 
     hsme_runner = HSMERunner()
-    statechart = HSMEXMLParser(
+    statechart = HSMEXMLParser.parse_from_path(
         doc='path/to/basket.xml',
         doc_id='basket',
         datamodel={'a': 1, 'b': 2},
-    ).parse()
+    )
 
     hsme_runner.load(statechart, autosave=False)
     hsme_runner.start(autosave=False)

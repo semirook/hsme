@@ -100,7 +100,7 @@ get_possible_transitions()
 
 history
 -------
-Возвращает список объектов типа HSMEHistory, включающие в себя атрибуты `timestamp`, `event`, `src`, `dst`, `status`. Вызывает исключение HSMERunnerError, если машина не загружена::
+Возвращает список объектов типа HSMEHistory, включающие в себя атрибуты `timestamp`, `event`, `src`, `dst`, `data`. Вызывает исключение HSMERunnerError, если машина не загружена::
 
     hsme_runner.load(fsm)
 
@@ -110,8 +110,8 @@ history
     hsme_runner.send('do_add_to_basket', data={...})
     hsme_runner.history
     # [
-    #     HSMEHistory(timestamp='2014-03-18T10:46:30.629432', event='do_add_to_basket', src='in_basket_empty', dst='in_recalculation', status='OK')
-    #     HSMEHistory(timestamp='2014-03-18T10:46:30.637123', event='do_goto_in_basket_normal', src='in_recalculation', dst='in_basket_normal', status='OK')
+    #     HSMEHistory(timestamp='2014-03-18T10:46:30.629432', event='do_add_to_basket', src='in_basket_empty', dst='in_recalculation', data={...})
+    #     HSMEHistory(timestamp='2014-03-18T10:46:30.637123', event='do_goto_in_basket_normal', src='in_recalculation', dst='in_basket_normal', data=None)
     # ]
 
 
@@ -299,10 +299,10 @@ statechart_id
 Возвращает строковый идентификатор FSM-объекта, который был указан во время парсинга таблицы переходов. Если `doc_id` указан не был – вернёт md5-сумму представления таблицы переходов::
 
     hsme_runner = HSMERunner()
-    fsm = HSMEXMLParser(
+    fsm = HSMEXMLParser.parse_from_path(
         doc='path/to/basket.xml',
         doc_id='basket',
-    ).parse()
+    )
 
     hsme_runner.statechart_id  # 'basket'
 

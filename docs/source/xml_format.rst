@@ -5,37 +5,8 @@
 
 Реальный пример описания таблицы переходов с callback`ами для реализации логики компонента "Корзина":
 
-.. code-block:: xml
-
-    <scxml version="1.0">
-
-        <state id="in_recalculation" targetns="charts.basket_callbacks.in_recalculation">
-            <onentry target="on_enter_in_recalculation"/>
-            <onchange target="on_change_in_recalculation"/>
-            <onexit target="on_exit_in_recalculation"/>
-
-            <state id="in_basket_normal" targetns="charts.basket_callbacks.in_basket_normal">
-                <onentry target="on_enter_in_basket_normal"/>
-                <onchange target="on_change_in_basket_normal"/>
-                <onexit target="on_exit_in_basket_normal"/>
-
-                <transition event="do_goto_in_basket_normal" next="in_recalculation"/>
-                <transition event="do_add_to_basket" next="in_recalculation"/>
-                <transition event="do_remove_product" next="in_recalculation"/>
-            </state>
-
-            <state id="in_basket_freeze">
-                <transition event="do_goto_in_basket_freeze" next="in_recalculation"/>
-                <transition event="do_add_to_basket" next="in_recalculation"/>
-                <transition event="do_remove_product" next="in_recalculation"/>
-            </state>
-
-            <state id="in_basket_empty" initial="true">
-                <transition event="do_add_to_basket" next="in_recalculation"/>
-            </state>
-        </state>
-    
-    </scxml>
+.. literalinclude:: ../../tests/charts/basket.xml
+   :language: xml
 
 
 Базовые принципы и возможности предложенного формата
