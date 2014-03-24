@@ -69,7 +69,8 @@ class HSMEParserBase(object):
 
     @doc.setter
     def doc(self, val):
-        assert isinstance(val, types.StringTypes)
+        if not isinstance(val, types.StringTypes):
+            raise HSMEParserError('The doc is not a string')
         self._doc = val
 
     def get_doc_id(self):
@@ -185,7 +186,9 @@ class HSMEXMLParser(HSMEParserBase):
 
     @classmethod
     def parse_from_path(cls, doc, doc_id=None, datamodel=None):
-        assert os.path.exists(doc)
+        if not os.path.exists(doc):
+            raise HSMEParserError('File "%s" does not exist' % doc)
+
         parser = cls(doc_id=doc_id, datamodel=datamodel)
         with open(doc, 'rb') as doc_file:
             parser.doc = doc_file.read()
@@ -196,7 +199,9 @@ class HSMEXMLParser(HSMEParserBase):
 
     @classmethod
     def parse_from_file(cls, doc, doc_id=None, datamodel=None):
-        assert isinstance(doc, types.FileType)
+        if not isinstance(doc, types.FileType):
+            raise HSMEParserError('The doc is not a file instance')
+
         parser = cls(doc=doc.read(), doc_id=doc_id, datamodel=datamodel)
         try:
             return parser.parse()
@@ -207,7 +212,9 @@ class HSMEXMLParser(HSMEParserBase):
 
     @classmethod
     def parse_from_string(cls, doc, doc_id=None, datamodel=None):
-        assert isinstance(doc, types.StringTypes)
+        if not isinstance(doc, types.StringTypes):
+            raise HSMEParserError('The doc is not a string')
+
         parser = cls(doc=doc, doc_id=doc_id, datamodel=datamodel)
         try:
             return parser.parse()
