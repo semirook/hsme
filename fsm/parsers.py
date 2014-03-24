@@ -58,7 +58,7 @@ class HSMEParserBase(object):
     def __init__(self, doc=None, doc_id=None, datamodel=None):
         self._doc = doc
         self.table = HSMEStateChart()
-        self.doc_id = doc_id or self.get_doc_id()
+        self.doc_id = doc_id
         self.datamodel = datamodel or {}
 
     @property
@@ -73,7 +73,7 @@ class HSMEParserBase(object):
         self._doc = val
 
     def get_doc_id(self):
-        return hashlib.md5(repr(self.table)).hexdigest()
+        return self.doc_id or hashlib.md5(repr(self.table)).hexdigest()
 
     def _compose(self, events_map, states_map):
         for state_inst in states_map.itervalues():
