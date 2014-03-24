@@ -161,7 +161,7 @@ class TestCallbacks(unittest.TestCase):
     def test_initial_state(self, enter_mock, change_mock, exit_mock, change_b_mock):
         hsme = HSMERunner()
         xml_path = get_xml_path()
-        checkout_sm = HSMEXMLParser(xml_path).parse()
+        checkout_sm = HSMEXMLParser.parse_from_path(xml_path)
         hsme.load(checkout_sm, autosave=False)
         hsme.start(autosave=False)
 
@@ -182,7 +182,7 @@ class TestCallbacks(unittest.TestCase):
     def test_registered_callbacks(self, enter_mock_1):
         hsme = HSMERunner()
         xml_path = get_xml_path()
-        checkout_sm = HSMEXMLParser(xml_path).parse()
+        checkout_sm = HSMEXMLParser.parse_from_path(xml_path)
         hsme.load(checkout_sm, autosave=False)
         hsme.register_processing_map({
             'in_recalculation': {

@@ -1,7 +1,12 @@
 # coding=utf-8
+import os
 import types
 import hashlib
-from xml.etree.ElementTree import parse
+import xml.etree.ElementTree as ET
+
+
+class HSMEParserError(Exception):
+    pass
 
 
 class HSMEState(object):
@@ -50,11 +55,22 @@ class HSMEStateChart(object):
 
 class HSMEParserBase(object):
 
-    def __init__(self, doc, doc_id=None, datamodel=None):
+    def __init__(self, doc=None, doc_id=None, datamodel=None):
+        self._doc = doc
         self.table = HSMEStateChart()
-        self.doc = doc
         self.doc_id = doc_id or self.get_doc_id()
         self.datamodel = datamodel or {}
+
+    @property
+    def doc(self):
+        if self._doc is None:
+            raise HSMEParserError('Statechart document is not defined')
+        return self._doc
+
+    @doc.setter
+    def doc(self, val):
+        assert isinstance(val, types.StringTypes)
+        self._doc = val
 
     def get_doc_id(self):
         return hashlib.md5(repr(self.table)).hexdigest()
@@ -69,6 +85,7 @@ class HSMEParserBase(object):
         self.table._id = self.doc_id
         self.table._statechart = events_map
         self.table._datamodel.update(self.datamodel)
+        self.doc_id = self.get_doc_id()
 
 
 class HSMEDictsParser(HSMEParserBase):
@@ -99,11 +116,6 @@ class HSMEDictsParser(HSMEParserBase):
 
 
 class HSMEXMLParser(HSMEParserBase):
-
-    def __init__(self, doc, doc_id=None, datamodel=None):
-        super(HSMEXMLParser, self).__init__(doc, doc_id, datamodel)
-        if isinstance(doc, basestring):
-            self.doc = open(doc, 'rb')
 
     def _parse_state(self, elem, is_meta=True):
         for state in elem.iterfind('state'):
@@ -141,10 +153,10 @@ class HSMEXMLParser(HSMEParserBase):
 
         return callbacks
 
-    def _parse(self):
+    def parse(self):
         states = {}
         events = {}
-        doc = parse(self.doc)
+        doc = ET.fromstring(self.doc)
 
         for state, is_meta in self._parse_state(doc):
             state_id = state.attrib['id']
@@ -171,11 +183,33 @@ class HSMEXMLParser(HSMEParserBase):
 
         return self.table
 
-    def parse(self):
+    @classmethod
+    def parse_from_path(cls, doc, doc_id=None, datamodel=None):
+        assert os.path.exists(doc)
+        parser = cls(doc_id=doc_id, datamodel=datamodel)
+        with open(doc, 'rb') as doc_file:
+            parser.doc = doc_file.read()
         try:
-            return self._parse()
+            return parser.parse()
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def parse_from_file(cls, doc, doc_id=None, datamodel=None):
+        assert isinstance(doc, types.FileType)
+        parser = cls(doc=doc.read(), doc_id=doc_id, datamodel=datamodel)
+        try:
+            return parser.parse()
         except Exception as e:
             raise e
         finally:
-            if isinstance(self.doc, types.FileType):
-                self.doc.close()
+            doc.close()
+
+    @classmethod
+    def parse_from_string(cls, doc, doc_id=None, datamodel=None):
+        assert isinstance(doc, types.StringTypes)
+        parser = cls(doc=doc, doc_id=doc_id, datamodel=datamodel)
+        try:
+            return parser.parse()
+        except Exception as e:
+            raise e

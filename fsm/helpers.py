@@ -1,4 +1,5 @@
 # coding=utf-8
+from functools import wraps
 from fsm.core import HSMERunner, HSMERunnerError
 
 
@@ -20,13 +21,10 @@ class HSMERunnerMK(HSMERunner):
     def flush(self):
         super(HSMERunnerMK, self).flush()
         if self.is_loaded():
-            sm_source = self.pickle_funcs.sm_source(
-                self.datamodel.get('USER_ID'),
-                self.datamodel.get('SM_NAME'),
-            )
             self.pickle_funcs.sm_dest(
-                sm=sm_source,
                 hsme=self,
+                sm_name=self.statechart_id,
+                user_id=self.datamodel.get('USER_ID'),
             )
 
 
@@ -82,3 +80,16 @@ class HSMERunnerFactory(object):
     def register_pickle_funcs(self, sm_source, sm_dest):
         for fsm in self.runners:
             fsm.register_pickle_funcs(sm_source, sm_dest)
+
+
+def hsme_preload(hsme_pool, user_id, sm_name, callbacks=None):
+    def hsme_wrap_view(view):
+        @wraps(view)
+        def view_args(*args, **kwargs):
+            fsm = hsme_pool.get_current_or_load(user_id, sm_name)
+            if callbacks:
+                fsm.register_processing_map(callbacks)
+            fsm.start()
+            return view(*args, fsm=fsm, **kwargs)
+        return view_args
+    return hsme_wrap_view
