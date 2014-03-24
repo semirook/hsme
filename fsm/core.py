@@ -41,7 +41,7 @@ HSMEHistory = namedtuple(
         'event',
         'src',
         'dst',
-        'status',
+        'data',
     ]
 )
 
@@ -262,7 +262,7 @@ class HSMERunner(object):
                 callback_enter(hsme_proxy)
 
             self.hsme._current_state = hsme_proxy.dst
-            self._record_history(hsme_proxy, 'OK')
+            self._record_history(hsme_proxy)
 
             if autosave:
                 self.flush()
@@ -274,13 +274,13 @@ class HSMERunner(object):
                 )
                 callback_change(hsme_proxy)
 
-    def _record_history(self, hsme_proxy, status):
+    def _record_history(self, hsme_proxy):
         self.hsme._history.append(
             HSMEHistory(
                 timestamp=datetime.datetime.utcnow().isoformat(),
                 event=hsme_proxy.event,
                 src=hsme_proxy.src.name if hsme_proxy.src else None,
                 dst=hsme_proxy.dst.name if hsme_proxy.dst else None,
-                status=status,
+                data=hsme_proxy.data,
             )
         )

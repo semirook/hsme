@@ -13,10 +13,10 @@ HSMERunner API
 .. code-block:: python 
 
     hsme_runner = HSMERunner()
-    fsm = HSMEXMLParser(
+    fsm = HSMEXMLParser.parse_from_path(
         doc='path/to/basket.xml',
         doc_id='basket',
-    ).parse()
+    )
 
 
 .. [#f1] FSM – Final State Machine. Объект, который включает в себя информацию об идентификаторе, текущем, начальном и конечном состоянии, нормализованную таблицу переходов, историю переходов и модель данных. Экземпляр класса HSMEStateChart, создаётся парсером (HSMEDictsParser или HSMEXMLParser) на базе таблицы переходов и пользовательских данных.
@@ -64,23 +64,24 @@ flush()
         def flush(self):
             super(HSMERunnerMK, self).flush()
             if self.is_loaded():
-                sm_source = self.pickle_funcs.sm_source(
-                    self.datamodel.get('USER_ID'),
-                    self.datamodel.get('SM_NAME'),
-                )
                 self.pickle_funcs.sm_dest(
-                    sm=sm_source,
                     hsme=self,
+                    sm_name=self.statechart_id,
+                    user_id=self.datamodel.get('USER_ID'),
                 )
+
 
 Данный пример реализации предполагает наличие в модели данных FSM идентификаторов пользователя и названия-метки машины, которые позволяют однозначно определить объект. Сами callback`и в простом случае могут выглядеть так::
 
-    def statemachine_save(sm, hsme):
-        sm.pickle = hsme.pickle()
-        sm.save()
-
     def statemachine_source(user_id, sm_name):
         return StateMachine.query.filter_by(user_id=user_id, name=sm_name).first()
+
+    def statemachine_dest(user_id, sm_name, hsme):
+        sm = statemachine_source(user_id, sm_name)
+        if sm is None:
+            sm = StateMachine.create(name=sm_name, user_id=user_id)
+
+        sm.update(pickle=hsme.pickle())
 
 
 get_possible_transitions()
