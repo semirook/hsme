@@ -5,7 +5,7 @@ from fsm.parsers import HSMEXMLParser, HSMEDictsParser
 from .charts.basket import BASKET_CHART
 
 
-def get_xml_path():
+def get_basket_xml_path():
     ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(ROOT_PATH, 'charts', 'basket.xml')
     return path
@@ -14,18 +14,19 @@ def get_xml_path():
 class TestXMLParser(TestCase):
 
     def test_transitions(self):
-        path = get_xml_path()
+        path = get_basket_xml_path()
         table = HSMEXMLParser.parse_from_path(path)
 
         self.assertEqual(table._init_state.name, 'in_basket_empty')
         statechart = table._statechart
 
         events = {
-            'do_goto_in_basket_empty',
-            'do_goto_in_basket_normal',
-            'do_goto_in_basket_freeze',
             'do_add_to_basket',
+            'do_goto_in_basket_empty',
+            'do_goto_in_basket_freeze',
+            'do_goto_in_basket_normal',
             'do_remove_product',
+            'do_unfreeze',
         }
         self.assertSetEqual(set(statechart.keys()), events)
 
@@ -48,44 +49,31 @@ class TestXMLParser(TestCase):
                 self.assertEqual(dst.name, 'in_basket_normal')
 
         transitions = statechart['do_goto_in_basket_freeze']
+        self.assertTrue(len(transitions) == 1)
+        src, dst = transitions.items()[0]
+        self.assertEqual(src.name, 'in_recalculation')
+        self.assertEqual(dst.name, 'in_basket_freeze')
+
+        transitions = statechart['do_add_to_basket']
         self.assertTrue(len(transitions) == 2)
         self.assertSetEqual(
             {x.name for x in transitions},
-            {'in_basket_freeze', 'in_recalculation'}
-        )
-        for src, dst in transitions.items():
-            if src.name == 'in_basket_freeze':
-                self.assertEqual(dst.name, 'in_recalculation')
-            if src.name == 'in_recalculation':
-                self.assertEqual(dst.name, 'in_basket_freeze')
-
-        transitions = statechart['do_add_to_basket']
-        self.assertTrue(len(transitions) == 3)
-        self.assertSetEqual(
-            {x.name for x in transitions},
-            {'in_basket_normal', 'in_basket_freeze', 'in_basket_empty'}
+            {'in_basket_normal', 'in_basket_empty'}
         )
         for src, dst in transitions.items():
             if src.name == 'in_basket_normal':
-                self.assertEqual(dst.name, 'in_recalculation')
-            if src.name == 'in_basket_freeze':
                 self.assertEqual(dst.name, 'in_recalculation')
             if src.name == 'in_basket_empty':
                 self.assertEqual(dst.name, 'in_recalculation')
 
         transitions = statechart['do_remove_product']
-        self.assertTrue(len(transitions) == 2)
-        self.assertSetEqual(
-            {x.name for x in transitions},
-            {'in_basket_normal', 'in_basket_freeze'}
-        )
-        if src.name == 'in_basket_normal':
-            self.assertEqual(dst.name, 'in_recalculation')
-        if src.name == 'in_basket_freeze':
-            self.assertEqual(dst.name, 'in_recalculation')
+        self.assertTrue(len(transitions) == 1)
+        src, dst = transitions.items()[0]
+        self.assertEqual(src.name, 'in_basket_normal')
+        self.assertEqual(dst.name, 'in_recalculation')
 
     def test_callbacks(self):
-        path = get_xml_path()
+        path = get_basket_xml_path()
         with open(path) as xml:
             table = HSMEXMLParser.parse_from_file(xml)
 
@@ -134,9 +122,9 @@ class TestXMLParser(TestCase):
 class TestParsersEquality(TestCase):
 
     def test_dict_and_xml(self):
-        path = get_xml_path()
-        table_from_xml = HSMEXMLParser.parse_from_path(path, doc_id='basket')
-        table_from_dict = HSMEDictsParser(BASKET_CHART, doc_id='basket').parse()
+        path = get_basket_xml_path()
+        table_from_xml = HSMEXMLParser.parse_from_path(path)
+        table_from_dict = HSMEDictsParser(BASKET_CHART).parse()
 
         self.assertEqual(table_from_xml._id, table_from_dict._id)
         self.assertEqual(table_from_xml._init_state, table_from_dict._init_state)

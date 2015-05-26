@@ -1,6 +1,5 @@
-# coding=utf-8
+# coding: utf-8
 import pickle
-import datetime
 import types
 from collections import namedtuple
 from fsm.parsers import HSMEStateChart
@@ -28,28 +27,8 @@ HSMEProxyObject = namedtuple(
         'fsm',
         'event',
         'data',
-        'datamodel',
         'src',
         'dst',
-    ]
-)
-
-
-HSMEHistory = namedtuple(
-    'HSMEHistory', [
-        'timestamp',
-        'event',
-        'src',
-        'dst',
-        'data',
-    ]
-)
-
-
-HSMEPickleFunc = namedtuple(
-    'HSMEPickleFunc', [
-        'sm_source',
-        'sm_dest',
     ]
 )
 
@@ -58,58 +37,53 @@ class HSMERunner(object):
 
     def __init__(self):
         self.clear()
-        self.pickle_funcs = None
 
     def __getattribute__(self, name):
         if name in {
             'datamodel',
-            'history',
             'in_state',
             'is_finished',
             'is_initial',
-            'pickle',
+            'save',
             'start',
             'statechart_id',
-            'update_datamodel',
         } and not self.is_loaded():
             raise HSMERunnerError("Initialize machine first")
 
         return object.__getattribute__(self, name)
 
     def is_loaded(self):
-        return isinstance(self.hsme, HSMEStateChart)
+        return self.model is not None
 
     def is_started(self):
         return self.current_state is not None
 
     def clear(self):
-        self.hsme = None
-        self.processing_map = {}
+        self.model = None
 
-    def start(self, data=None, autosave=True):
+    def start(self, data=None):
         if self.is_started():
             return False
 
-        src = self.hsme._current_state
-        dst = self.hsme._init_state
+        src = self.model._current_state
+        dst = self.model._init_state
         hsme_proxy = HSMEProxyObject(
             fsm=self,
             event='__init__',
             src=src,
             dst=dst,
             data=data,
-            datamodel=self.datamodel,
         )
-        self._do_transition(hsme_proxy, autosave)
+        self._do_transition(hsme_proxy)
 
         return True
 
-    def send(self, event_name, data=None, autosave=True):
+    def send(self, event_name, data=None):
         if not self.is_loaded() or not self.is_started():
             raise HSMERunnerError("Initialize and start machine first")
 
         src = self.current_state
-        if not event_name in self.hsme._statechart:
+        if event_name not in self.model._statechart:
             raise UnregisteredEventError(
                 "Event %s is unregistered" % event_name
             )
@@ -119,24 +93,23 @@ class HSMERunner(object):
                     event_name, src.name
                 )
             )
-        event_transition = self.hsme._statechart[event_name]
+        event_transition = self.model._statechart[event_name]
         dst = src in event_transition and event_transition[src]
 
         hsme_proxy = HSMEProxyObject(
             fsm=self,
             event=event_name,
             data=data,
-            datamodel=self.datamodel,
             src=src,
             dst=dst,
         )
-        self._do_transition(hsme_proxy, autosave)
+        self._do_transition(hsme_proxy)
 
     def can_send(self, event_name):
-        if not self.is_loaded() or event_name not in self.hsme._statechart:
+        if not self.is_loaded() or event_name not in self.model._statechart:
             return False
 
-        event_transition = self.hsme._statechart[event_name]
+        event_transition = self.model._statechart[event_name]
 
         return self.current_state in event_transition
 
@@ -146,46 +119,29 @@ class HSMERunner(object):
         else:
             raise HSMERunnerError("Initialize and start machine first")
 
-    def load(
-        self,
-        hsme_instance,
-        autosave=True,
-    ):
-        # Save currently loaded statechart
-        if autosave and self.is_loaded():
-            self.flush()
-
+    def load(self, model=None):
         self.clear()
-
-        if isinstance(hsme_instance, HSMEStateChart):
-            self.hsme = hsme_instance
-        elif isinstance(hsme_instance, basestring):
-            self.hsme = pickle.loads(hsme_instance)
-        else:
+        if isinstance(model, basestring):
+            model = pickle.loads(model)
+        if not isinstance(model, HSMEStateChart):
             raise HSMERunnerError(
                 'Invalid statechart format, '
-                'HSMEStateChart instance or pickle expected'
+                'HSMEStateChart instance expected'
             )
+        self.model = model
 
         return self
 
-    def pickle(self):
-        return pickle.dumps(self.hsme)
-
-    def flush(self):
-        if self.pickle_funcs is None:
-            raise HSMERunnerError(
-                'Register source and dest callbacks '
-                'for the pickle processing first'
-            )
+    def save(self):
+        return pickle.dumps(self.model)
 
     def in_state(self, state_name):
         return self.current_state.name == state_name
 
     def is_finished(self):
         return (
-            bool(self.hsme._final_state)
-            and self.current_state == self.hsme._final_state
+            bool(self.model._final_state)
+            and self.current_state == self.model._final_state
         )
 
     def is_initial(self):
@@ -196,33 +152,15 @@ class HSMERunner(object):
 
     @property
     def current_state(self):
-        return self.hsme._current_state if self.hsme else None
-
-    @property
-    def datamodel(self):
-        return self.hsme._datamodel
-
-    def update_datamodel(self, data):
-        self.hsme._datamodel.update(data)
-
-    @property
-    def history(self):
-        return self.hsme._history
+        return self.model._current_state if self.model else None
 
     @property
     def statechart_id(self):
-        return self.hsme._id
+        return self.model._id
 
-    def register_pickle_funcs(self, sm_source, sm_dest):
-        self.pickle_funcs = HSMEPickleFunc(
-            sm_source=sm_source,
-            sm_dest=sm_dest,
-        )
-        return self
-
-    def register_processing_map(self, processing_map):
-        self.processing_map = processing_map or {}
-        return self
+    @property
+    def datamodel(self):
+        return self.model._datamodel
 
     def _prepare_callback(self, callback, state, type_):
         if not isinstance(callback, types.FunctionType):
@@ -236,12 +174,9 @@ class HSMERunner(object):
                 )
         return callback
 
-    def _do_transition(self, hsme_proxy, autosave=True):
+    def _do_transition(self, hsme_proxy):
         if hsme_proxy.src:
             src_callbacks = hsme_proxy.src.callbacks
-            if hsme_proxy.src.name in self.processing_map:
-                src_callbacks = self.processing_map[hsme_proxy.src.name]
-
             if 'on_exit' in src_callbacks:
                 callback_exit = self._prepare_callback(
                     src_callbacks['on_exit'],
@@ -251,9 +186,6 @@ class HSMERunner(object):
 
         if hsme_proxy.dst:
             dst_callbacks = hsme_proxy.dst.callbacks
-            if hsme_proxy.dst.name in self.processing_map:
-                dst_callbacks = self.processing_map[hsme_proxy.dst.name]
-
             if 'on_enter' in dst_callbacks:
                 callback_enter = self._prepare_callback(
                     dst_callbacks['on_enter'],
@@ -261,11 +193,7 @@ class HSMERunner(object):
                 )
                 callback_enter(hsme_proxy)
 
-            self.hsme._current_state = hsme_proxy.dst
-            self._record_history(hsme_proxy)
-
-            if autosave:
-                self.flush()
+            self.model._current_state = hsme_proxy.dst
 
             if 'on_change' in dst_callbacks:
                 callback_change = self._prepare_callback(
@@ -273,14 +201,3 @@ class HSMERunner(object):
                     hsme_proxy.dst.name, 'on_change',
                 )
                 callback_change(hsme_proxy)
-
-    def _record_history(self, hsme_proxy):
-        self.hsme._history.append(
-            HSMEHistory(
-                timestamp=datetime.datetime.utcnow().isoformat(),
-                event=hsme_proxy.event,
-                src=hsme_proxy.src.name if hsme_proxy.src else None,
-                dst=hsme_proxy.dst.name if hsme_proxy.dst else None,
-                data=hsme_proxy.data,
-            )
-        )

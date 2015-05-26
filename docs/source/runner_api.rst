@@ -3,7 +3,11 @@
 HSMERunner API
 ==============
 
-**HSMERunner** – класс, который является набором API-методов для общения с FSM-объектом [#f1]_, с помощью которых можно загружать/выгружать FSM-объект, посылать события на изменение его состояния, снимать определённые значения, историю переходов, получить список возможных переходов из текущего состояния и пр. HSMERunner – универсальная обёртка вокруг FSM-объекта, знает о его внутренней структуре, но не зависит от его типа и таблицы переходов [#f2]_. 
+**HSMERunner** – класс, который является набором API-методов для общения с FSM-объектом [#f1]_, 
+с помощью которых можно загружать/выгружать FSM-объект, посылать события на изменение его состояния, 
+снимать определённые значения, историю переходов, получить список возможных переходов из текущего состояния и пр. 
+HSMERunner – универсальная обёртка вокруг FSM-объекта, знает о его внутренней структуре, но не зависит от его типа 
+и таблицы переходов [#f2]_. 
 
 В следущих примерах, предполагается работа с таблицей переходов basket из `basket.xml`.
 
@@ -13,14 +17,15 @@ HSMERunner API
 .. code-block:: python 
 
     hsme_runner = HSMERunner()
-    fsm = HSMEXMLParser.parse_from_path(
-        doc='path/to/basket.xml',
-        doc_id='basket',
-    )
+    fsm = HSMEXMLParser.parse_from_path(chart='path/to/basket.xml')
 
 
-.. [#f1] FSM – Final State Machine. Объект, который включает в себя информацию об идентификаторе, текущем, начальном и конечном состоянии, нормализованную таблицу переходов, историю переходов и модель данных. Экземпляр класса HSMEStateChart, создаётся парсером (HSMEDictsParser или HSMEXMLParser) на базе таблицы переходов и пользовательских данных.
-.. [#f2] Таблица переходов – формализованное описание состояний конечного автомата и событий (входного алфавита), на которые реагируют эти состояния. Правила переходов между состояниями.
+.. [#f1] FSM – Final State Machine. Объект, который включает в себя информацию об идентификаторе, 
+    текущем, начальном и конечном состоянии, нормализованную таблицу переходов и модель данных. 
+    Экземпляр класса HSMEStateChart, создаётся парсером (HSMEDictsParser или HSMEXMLParser) 
+    на базе таблицы переходов и пользовательских данных.
+.. [#f2] Таблица переходов – формализованное описание состояний конечного автомата и событий (входного алфавита), 
+    на которые реагируют эти состояния. Правила переходов между состояниями.
 
 
 can_send(event_name)
@@ -32,7 +37,7 @@ can_send(event_name)
 
 clear()
 -------
-Обычно не используется явно, обнуляет состояние runner`а, таким образом выгружая FSM-объект и карту перекрывающих callback`ов::
+Обычно не используется явно, обнуляет состояние runner`а, таким образом выгружая FSM-объект::
 
     hsme_runner.clear()
 
@@ -49,44 +54,16 @@ current_state
 
 datamodel
 ---------
-Возвращает словарь, модель данных FSM, если она была определена во время парсинга таблицы переходов или загружена позже методом :meth:`update_datamodel` (так как это просто словарь, можно работать с ним методами dict). Вызовет исключение HSMERunnerError, если машина не загружена::
+Возвращает словарь, модель данных FSM. Вызовет исключение HSMERunnerError, если машина не загружена::
 
     hsme_runner.load(fsm)  # если не было загружено раньше
     fsm_datamodel = hsme_runner.datamodel 
 
 
-flush()
--------
-Обычно не требует явного вызова. Выбрасывает исключение HSMERunnerError, если не были определены и зарегистрированы методом :meth:`register_pickle_funcs` функции источника и сохранения FSM-объекта. Параметры, необходимые для передачи в эти функции заранее неизвестны, поэтому flush() требуется доопределить через наследование::
-
-    class HSMERunnerMK(HSMERunner):
-
-        def flush(self):
-            super(HSMERunnerMK, self).flush()
-            if self.is_loaded():
-                self.pickle_funcs.sm_dest(
-                    hsme=self,
-                    sm_name=self.statechart_id,
-                    user_id=self.datamodel.get('USER_ID'),
-                )
-
-
-Данный пример реализации предполагает наличие в модели данных FSM идентификаторов пользователя и названия-метки машины, которые позволяют однозначно определить объект. Сами callback`и в простом случае могут выглядеть так::
-
-    def statemachine_source(user_id, sm_name):
-        return StateMachine.query.filter_by(user_id=user_id, name=sm_name).first()
-
-    def statemachine_dest(user_id, sm_name, hsme):
-        sm = statemachine_source(user_id, sm_name)
-        if sm is None:
-            sm = StateMachine.create(name=sm_name, user_id=user_id)
-
-        sm.update(pickle=hsme.pickle())
-
-
 get_possible_transitions()
 --------------------------
-Возвращает словарь вида {'event_name': 'state_name'} с соответствующими значениями для текущего состояния машины. Вызывает исключение HSMERunnerError, если машина на загружена и не запущена методами :meth:`load` и :meth:`start` соответственно::
+Возвращает словарь вида {'event_name': 'state_name'} с соответствующими значениями для текущего состояния машины. 
+Вызывает исключение HSMERunnerError, если машина на загружена и не запущена методами :meth:`load` и :meth:`start` соответственно::
 
     hsme_runner.load(fsm)
     hsme_runner.start()
@@ -96,23 +73,6 @@ get_possible_transitions()
     #    'do_goto_in_basket_empty': 'in_basket_empty',
     #    'do_goto_in_basket_freeze': 'in_basket_freeze',
     # }
-
-
-history
--------
-Возвращает список объектов типа HSMEHistory, включающие в себя атрибуты `timestamp`, `event`, `src`, `dst`, `data`. Вызывает исключение HSMERunnerError, если машина не загружена::
-
-    hsme_runner.load(fsm)
-
-И имеет смысл, если запущена::
-
-    hsme_runner.start()
-    hsme_runner.send('do_add_to_basket', data={...})
-    hsme_runner.history
-    # [
-    #     HSMEHistory(timestamp='2014-03-18T10:46:30.629432', event='do_add_to_basket', src='in_basket_empty', dst='in_recalculation', data={...})
-    #     HSMEHistory(timestamp='2014-03-18T10:46:30.637123', event='do_goto_in_basket_normal', src='in_recalculation', dst='in_basket_normal', data=None)
-    # ]
 
 
 in_state(state_name)
@@ -128,7 +88,8 @@ in_state(state_name)
 
 is_finished()
 -------------
-Булевая проверка на конечное состояние FSM. Предполагает, что в таблице переходов определёно такое состояние и возвращает True, если текущее состояние машины совпадает с конечным. Вызывает исключение HSMERunner, если машина не загружена::
+Булевая проверка на конечное состояние FSM. Предполагает, что в таблице переходов определёно такое состояние 
+и возвращает True, если текущее состояние машины совпадает с конечным. Вызывает исключение HSMERunner, если машина не загружена::
 
     hsme_runner.is_finished()  # True or False
 
@@ -161,95 +122,30 @@ is_started()
     hsme_runner.is_started()  # True
 
 
-load(fsm, [autosave=True])
+load(fsm)
 --------------------------
-Загружает в runner FSM-объект типа HSMEStateChart или его pickle. Если runner в это время уже загружен каким-либо другим экземпляром, происходит сброс вызовом :meth:`flush` (если зарегистрированы pickle-callback`и), обнуление и загрузка нового экземпляра::
+Загружает в runner FSM-объект типа HSMEStateChart или его pickle. Если runner в это время уже загружен 
+каким-либо другим экземпляром, происходит его обнуление и загрузка нового экземпляра::
 
     hsme_runner.load(fsm)  # устанавливает fsm
-    hsme_runner.load(another_fsm)  # сохраняет (опционально) состояние fsm, загружает another_fsm
+    hsme_runner.load(another_fsm)  # загружает another_fsm
 
 
-pickle()
---------
+save()
+------
 Возвращает pickle загруженной FSM::
 
     hsme_runner.load(fsm)
     pickle_bytestring = hsme_runner.pickle()
 
 
-register_pickle_funcs(sm_source, sm_dest)
------------------------------------------
-Прежде, чем использовать возможность autosave`а методов :meth:`load`, :meth:`save`, :meth:`send` и метода :meth:`flush` в частности, необходимо зарегистрировать функции источника и сохранения FSM-объектов. Смотрите пример метода :meth:`flush`. После регистрации, функции доступны из runner`а::
-
-    hsme_runner.register_pickle_funcs(
-        sm_source=statemachine_source,
-        sm_dest=statemachine_save,
-    )
-    sm_source = hsme_runner.pickle_funcs.sm_source
-    sm_dest = hsme_runner.pickle_funcs.sm_dest
-
-
-register_processing_map(mapping)
---------------------------------
-Используется для возможности определить callback`и состояний или перекрыть их определения из таблицы переходов. Принимает в качестве аргумента словарь, где ключи – названия состояний, чьи callback`и мы хотим определить, а значения – словари вида {тип [#r1]_: callback}::
-
-    CUSTOM_BASKET_CALLBACKS = {
-        'in_basket_normal': {
-            'on_enter': on_enter_in_basket,
-            'on_change': on_change_in_basket,
-        },
-        'in_basket_empty': {
-            'on_exit': on_exit_from_basket_empty,
-        },
-    }
-    hsme_runner.register_processing_map(CUSTOM_BASKET_CALLBACKS)
-
-В качестве описания callback`ов могут также выступать строки с абсолютным путём к функции (в python-стиле), вместо объекта функции. Во время отработки они будут импортированы динамически::
-
-    CUSTOM_BASKET_CALLBACKS = {
-        'in_basket_normal': {
-            'on_enter': 'package.module.on_enter_in_basket',
-            'on_change': package.module.on_change_in_basket',
-        },
-        'in_basket_empty': {
-            'on_exit': 'package.module.on_exit_from_basket_empty',
-        },
-    }
-    hsme_runner.register_processing_map(CUSTOM_BASKET_CALLBACKS)
-
-В случае, если в таблице переходов определена логика для состояния, которую мы хотим перекрыть, нужно помнить, что перекрытие полное, а не частичное. Например::
-
-    <state id="in_recalculation" targetns="tests.charts.basket_callbacks">
-        <onentry target="on_enter_in_recalculation"/>
-        <onchange target="on_change_in_recalculation"/>
-        <onexit target="on_exit_in_recalculation"/>
-    </state>
-
-    CUSTOM_BASKET_CALLBACKS = {
-        'in_recalculation': {
-            'on_enter': 'package.module.another_callback'
-        }
-    }
-    hsme_runner.register_processing_map(CUSTOM_BASKET_CALLBACKS)
-
-Для состояния *in_recalculation* останется доступным только один новый callback на **on_enter**. Поэтому если возникает необходимость сохранить остальные, надо дополнить список, согласно данным из таблицы переходов::
-
-    CUSTOM_BASKET_CALLBACKS = {
-        'in_recalculation': {
-            'on_enter': 'package.module.another_callback'
-            'on_change': 'tests.charts.basket_callbacks.on_change_in_recalculation',
-            'on_exit': 'tests.charts.basket_callbacks.on_exit_in_recalculation',
-        }
-    }
-    hsme_runner.register_processing_map(CUSTOM_BASKET_CALLBACKS)
-
-
-.. [#r1] Типов callback`ов предусмотрено 3: на вход в состояние ('on_enter'), на состояние ('on_change') и на выход из состояния ('on_exit')
-
-
-send(event_name, [data=None, autosave=True])
---------------------------------------------
-Главный инструмент для общения с FSM. Предполагается, что машина загружена и запущена. Делает попытку изменить состояние машины по указанному событию. Опционально, можно передать данные callback`ам в виде словаря. Если таблица переходов ничего не знает об отправляемом событии, вернёт исключение UnregisteredEventError. Если событие не предусмотрено описанием текущего состояния, вернёт исключение ImpossibleEventError::
+send(event_name, [data=None])
+-----------------------------
+Главный инструмент для общения с FSM. Предполагается, что машина загружена и запущена. 
+Делает попытку изменить состояние машины по указанному событию. Опционально, можно передать данные 
+callback`ам в виде словаря. Если таблица переходов ничего не знает об отправляемом событии, 
+вернёт исключение UnregisteredEventError. Если событие не предусмотрено описанием текущего состояния, 
+вернёт исключение ImpossibleEventError::
 
     hsme_runner.send(
         'do_add_to_basket', data={
@@ -266,7 +162,10 @@ send(event_name, [data=None, autosave=True])
             }
         )
 
-По факту, происходит transition (перемещение) из текущего состояния в состояние, которое соответствует событию. При этом, последовательно отрабатывают callback`и на выход из текущего состояния, попытку входа в следующее состояние и вход в следующее состояние (при условии, что такие callback`и определены и данная цепочка не прервана исключением на одном из этих этапов)::
+По факту, происходит transition (перемещение) из текущего состояния в состояние, 
+которое соответствует событию. При этом, последовательно отрабатывают callback`и на выход из текущего состояния, 
+попытку входа в следующее состояние и вход в следующее состояние (при условии, что такие callback`и определены 
+и данная цепочка не прервана исключением на одном из этих этапов)::
 
     hsme_runner.in_state('in_basket_empty')  # True
     hsme_runner.send('do_add_to_basket')
@@ -279,9 +178,13 @@ send(event_name, [data=None, autosave=True])
     hsme_runner.in_state('in_basket_normal')
 
 
-start([data=None, autosave=True])
----------------------------------
-Метод "запускает" загруженный FSM-объект, переводя его в начальное состояние. Является частным случаем метода :meth:`send`, в отличие от которого не принимает событие в качестве аргумента, а переводит FSM в начальное состояние во внутреннему событию. Если FSM уже запущен и находится в каком-либо состоянии, метод вернёт False. Так же, как и send(), принимает в качестве опционального аргумента данные на transition, которые могут быть обработаны callback`ами начального состояния::
+start([data=None])
+------------------
+Метод "запускает" загруженный FSM-объект, переводя его в начальное состояние. 
+Является частным случаем метода :meth:`send`, в отличие от которого не принимает событие в качестве аргумента, 
+а переводит FSM в начальное состояние во внутреннему событию. Если FSM уже запущен и находится в каком-либо состоянии, 
+метод вернёт False. Так же, как и send(), принимает в качестве опционального аргумента данные на transition, 
+которые могут быть обработаны callback`ами начального состояния::
 
     hsme_runner.load(fsm)
     hsme_runner.start(data={'params': params})
@@ -296,21 +199,4 @@ start([data=None, autosave=True])
 
 statechart_id
 -------------
-Возвращает строковый идентификатор FSM-объекта, который был указан во время парсинга таблицы переходов. Если `doc_id` указан не был – вернёт md5-сумму представления таблицы переходов::
-
-    hsme_runner = HSMERunner()
-    fsm = HSMEXMLParser.parse_from_path(
-        doc='path/to/basket.xml',
-        doc_id='basket',
-    )
-
-    hsme_runner.statechart_id  # 'basket'
-
-
-update_datamodel(data)
-----------------------
-Обновляет (update словаря) модель данных FSM-объекта::
-
-    hsme_runner.datamodel  # {}
-    hsme_runner.update_datamodel({'a': 1, 'b': 2})
-    hsme_runner.datamodel  # {'a': 1, 'b': 2}
+Возвращает строковый идентификатор FSM-объекта (md5-сумма представления таблицы переходов)::

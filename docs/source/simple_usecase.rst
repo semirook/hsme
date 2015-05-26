@@ -3,22 +3,16 @@
 Использование 
 =============
 
-Рассмотрим пример работы с FSM на базе описанной в формате XML таблицы переходов [#x1]_.
-
-В наиболее простом случае, достаточно одного runner`а [#x2]_
+Пример работы с FSM на базе описанной в формате XML таблицы переходов [#x1]_.
 
 .. code-block:: python
 
     hsme_runner = HSMERunner()
-    statechart = HSMEXMLParser.parse_from_path(
-        doc='path/to/basket.xml',
-        doc_id='basket',
-        datamodel={'a': 1, 'b': 2},
-    )
+    statechart = HSMEXMLParser.parse_from_path(chart='path/to/basket.xml')
 
-    hsme_runner.load(statechart, autosave=False)
-    hsme_runner.start(autosave=False)
-    hsme_runner.send('event_name', data={'user': request.user}, autosave=False)
+    hsme_runner.load(statechart)
+    hsme_runner.start()
+    hsme_runner.send('event_name', data={'user': user_obj})
 
 .. [#x1] :ref:`xml_format`
 .. [#x2] :ref:`runner_api`

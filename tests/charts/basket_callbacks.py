@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding: utf-8
 
 
 def on_enter_in_recalculation(fsm_proxy):
@@ -6,7 +6,7 @@ def on_enter_in_recalculation(fsm_proxy):
 
 
 def on_change_in_recalculation(fsm_proxy):
-    pass
+    fsm_proxy.fsm.datamodel.update(fsm_proxy.data)
 
 
 def on_exit_in_recalculation(fsm_proxy):

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='hsme',
-    version='0.1',
+    version='0.2',
     author='Roman Semirook',
     author_email='semirook@gmail.com',
     packages=find_packages(),
@@ -23,4 +23,3 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
 )
-

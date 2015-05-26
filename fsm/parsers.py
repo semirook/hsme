@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding: utf-8
 import os
 import types
 import hashlib
@@ -47,7 +47,6 @@ class HSMEStateChart(object):
         self._final_state = None
         self._statechart = {}
         self._datamodel = {}
-        self._history = []
 
     def __repr__(self):
         return '<HSMEStateChart: %s>' % self._id
@@ -55,49 +54,39 @@ class HSMEStateChart(object):
 
 class HSMEParserBase(object):
 
-    def __init__(self, doc=None, doc_id=None, datamodel=None):
-        self._doc = doc
-        self.table = HSMEStateChart()
-        self.doc_id = doc_id
-        self.datamodel = datamodel or {}
+    STATE_CLS = HSMEState
+    STATE_CHART_CLS = HSMEStateChart
+
+    def __init__(self, chart=None):
+        self.chart = chart
+        self.model = self.STATE_CHART_CLS()
 
     @property
-    def doc(self):
-        if self._doc is None:
-            raise HSMEParserError('Statechart document is not defined')
-        return self._doc
+    def model_id(self):
+        return hashlib.md5(repr(self.model)).hexdigest()
 
-    @doc.setter
-    def doc(self, val):
-        if not isinstance(val, types.StringTypes):
-            raise HSMEParserError('The doc is not a string')
-        self._doc = val
-
-    def get_doc_id(self):
-        return self.doc_id or hashlib.md5(repr(self.table)).hexdigest()
-
-    def _compose(self, events_map, states_map):
+    def _compose(self, states_map):
+        events_map = {}
         for state_inst in states_map.itervalues():
             for e, dst in state_inst.events.iteritems():
                 events_map.setdefault(e, {}).update({
                     state_inst: states_map[dst]
                 })
 
-        self.table._id = self.doc_id
-        self.table._statechart = events_map
-        self.table._datamodel.update(self.datamodel)
-        self.doc_id = self.get_doc_id()
+        self.model._id = self.model_id
+        self.model._statechart = events_map
+
+        return self.model
 
 
 class HSMEDictsParser(HSMEParserBase):
 
     def parse(self):
-        events = {}
         states = {}
 
-        for state in self.doc:
+        for state in self.chart:
             state_id = state['id']
-            state_inst = HSMEState(
+            state_inst = self.STATE_CLS(
                 state['id'],
                 state.get('events'),
                 state.get('callbacks'),
@@ -107,13 +96,13 @@ class HSMEDictsParser(HSMEParserBase):
             states[state_id] = state_inst
 
             if state_inst.is_initial:
-                self.table._init_state = state_inst
+                self.model._init_state = state_inst
             if state_inst.is_final:
-                self.table._final_state = state_inst
+                self.model._final_state = state_inst
 
-        self._compose(events, states)
+        self._compose(states)
 
-        return self.table
+        return self.model
 
 
 class HSMEXMLParser(HSMEParserBase):
@@ -156,8 +145,7 @@ class HSMEXMLParser(HSMEParserBase):
 
     def parse(self):
         states = {}
-        events = {}
-        doc = ET.fromstring(self.doc)
+        doc = ET.fromstring(self.chart)
 
         for state, is_meta in self._parse_state(doc):
             state_id = state.attrib['id']
@@ -166,7 +154,7 @@ class HSMEXMLParser(HSMEParserBase):
                 events_map.update({
                     k: v for k, v in self._make_events_for_meta(state)
                 })
-            state_inst = HSMEState(
+            state_inst = self.STATE_CLS(
                 state_id,
                 events=events_map,
                 callbacks=self._parse_callbacks(state),
@@ -176,46 +164,45 @@ class HSMEXMLParser(HSMEParserBase):
             states[state_id] = state_inst
 
             if state_inst.is_initial:
-                self.table._init_state = state_inst
+                self.model._init_state = state_inst
             if state_inst.is_final:
-                self.table._final_state = state_inst
+                self.model._final_state = state_inst
 
-        self._compose(events, states)
+        self._compose(states)
 
-        return self.table
-
-    @classmethod
-    def parse_from_path(cls, doc, doc_id=None, datamodel=None):
-        if not os.path.exists(doc):
-            raise HSMEParserError('File "%s" does not exist' % doc)
-
-        parser = cls(doc_id=doc_id, datamodel=datamodel)
-        with open(doc, 'rb') as doc_file:
-            parser.doc = doc_file.read()
-        try:
-            return parser.parse()
-        except Exception as e:
-            raise e
+        return self.model
 
     @classmethod
-    def parse_from_file(cls, doc, doc_id=None, datamodel=None):
-        if not isinstance(doc, types.FileType):
-            raise HSMEParserError('The doc is not a file instance')
+    def parse_from_path(cls, chart):
+        if not os.path.exists(chart):
+            raise HSMEParserError('File "%s" does not exist' % chart)
 
-        parser = cls(doc=doc.read(), doc_id=doc_id, datamodel=datamodel)
+        with open(chart, 'rb') as chart_file:
+            parser = cls(chart_file.read())
+            try:
+                return parser.parse()
+            except Exception as e:
+                raise e
+
+    @classmethod
+    def parse_from_file(cls, chart):
+        if not isinstance(chart, types.FileType):
+            raise HSMEParserError('The chart is not a file instance')
+
+        parser = cls(chart=chart.read())
         try:
             return parser.parse()
         except Exception as e:
             raise e
         finally:
-            doc.close()
+            chart.close()
 
     @classmethod
-    def parse_from_string(cls, doc, doc_id=None, datamodel=None):
-        if not isinstance(doc, types.StringTypes):
-            raise HSMEParserError('The doc is not a string')
+    def parse_from_string(cls, chart):
+        if not isinstance(chart, types.StringTypes):
+            raise HSMEParserError('The chart is not a string')
 
-        parser = cls(doc=doc, doc_id=doc_id, datamodel=datamodel)
+        parser = cls(chart=chart)
         try:
             return parser.parse()
         except Exception as e:
