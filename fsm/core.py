@@ -40,7 +40,7 @@ class HSMERunner(object):
         self.clear()
 
     def __getattribute__(self, name):
-        if name in set({
+        if name in set([
             'datamodel',
             'in_state',
             'is_finished',
@@ -48,7 +48,7 @@ class HSMERunner(object):
             'save',
             'start',
             'statechart_id',
-        }) and not self.is_loaded():
+        ]) and not self.is_loaded():
             raise HSMERunnerError("Initialize machine first")
 
         return object.__getattribute__(self, name)
