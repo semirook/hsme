@@ -50,8 +50,8 @@ class TestXMLParser(TestCase):
         transitions = statechart['do_goto_in_basket_normal']
         self.assertTrue(len(transitions) == 2)
         self.assertSetEqual(
-            {x.name for x in transitions},
-            {'in_basket_normal', 'in_recalculation'}
+            set([x.name for x in transitions]),
+            set(['in_basket_normal', 'in_recalculation'])
         )
         for src, dst in transitions.items():
             if src.name == 'in_basket_normal':

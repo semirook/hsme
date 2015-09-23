@@ -161,7 +161,7 @@ class HSMEXMLParser(HSMEParserBase):
 
         for state, is_meta in self._parse_state(doc):
             state_id = state.attrib['id']
-            events_map = {k: v for k, v in self._parse_transition(state)}
+            events_map = dict((k, v) for k, v in self._parse_transition(state))
             if is_meta:
                 events_map.update({
                     k: v for k, v in self._make_events_for_meta(state)
