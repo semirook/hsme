@@ -1,20 +1,27 @@
 # coding: utf-8
 import os
+import sys
 from unittest import TestCase
+
 from fsm.parsers import HSMEXMLParser, HSMEDictsParser
+
 from .charts.basket import BASKET_CHART
 
 
-def get_basket_xml_path():
+PY = sys.version_info
+PY3K = PY >= (3, 0, 0)
+
+
+def get_xml_path(chart_name):
     ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
-    path = os.path.join(ROOT_PATH, 'charts', 'basket.xml')
+    path = os.path.join(ROOT_PATH, 'charts', chart_name)
     return path
 
 
 class TestXMLParser(TestCase):
 
     def test_transitions(self):
-        path = get_basket_xml_path()
+        path = get_xml_path('basket.xml')
         table = HSMEXMLParser.parse_from_path(path)
 
         self.assertEqual(table._init_state.name, 'in_basket_empty')
@@ -32,7 +39,11 @@ class TestXMLParser(TestCase):
 
         transitions = statechart['do_goto_in_basket_empty']
         self.assertTrue(len(transitions) == 1)
-        src, dst = transitions.items()[0]
+        trans_values = transitions.items()
+        if PY3K:
+            trans_values = list(trans_values)
+
+        src, dst = trans_values[0]
         self.assertEqual(src.name, 'in_recalculation')
         self.assertEqual(dst.name, 'in_basket_empty')
 
@@ -50,7 +61,11 @@ class TestXMLParser(TestCase):
 
         transitions = statechart['do_goto_in_basket_freeze']
         self.assertTrue(len(transitions) == 1)
-        src, dst = transitions.items()[0]
+        trans_values = transitions.items()
+        if PY3K:
+            trans_values = list(trans_values)
+
+        src, dst = trans_values[0]
         self.assertEqual(src.name, 'in_recalculation')
         self.assertEqual(dst.name, 'in_basket_freeze')
 
@@ -68,12 +83,16 @@ class TestXMLParser(TestCase):
 
         transitions = statechart['do_remove_product']
         self.assertTrue(len(transitions) == 1)
-        src, dst = transitions.items()[0]
+        trans_values = transitions.items()
+        if PY3K:
+            trans_values = list(trans_values)
+
+        src, dst = trans_values[0]
         self.assertEqual(src.name, 'in_basket_normal')
         self.assertEqual(dst.name, 'in_recalculation')
 
     def test_callbacks(self):
-        path = get_basket_xml_path()
+        path = get_xml_path('basket.xml')
         with open(path) as xml:
             table = HSMEXMLParser.parse_from_file(xml)
 
@@ -122,7 +141,7 @@ class TestXMLParser(TestCase):
 class TestParsersEquality(TestCase):
 
     def test_dict_and_xml(self):
-        path = get_basket_xml_path()
+        path = get_xml_path('basket.xml')
         table_from_xml = HSMEXMLParser.parse_from_path(path)
         table_from_dict = HSMEDictsParser(BASKET_CHART).parse()
 

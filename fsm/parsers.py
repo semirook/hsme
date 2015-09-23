@@ -1,8 +1,14 @@
 # coding: utf-8
 import os
+import io
+import sys
 import types
 import hashlib
 import xml.etree.ElementTree as ET
+
+
+PY = sys.version_info
+PY3K = PY >= (3, 0, 0)
 
 
 class HSMEParserError(Exception):
@@ -27,6 +33,12 @@ class HSMEState(object):
 
     def __repr__(self):
         return '<HSMEState: %s>' % self.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __lt__(self, other):
+         return self.name < other.name
 
     def __eq__(self, other):
         return (
@@ -63,12 +75,12 @@ class HSMEParserBase(object):
 
     @property
     def model_id(self):
-        return hashlib.md5(repr(self.model)).hexdigest()
+        return hashlib.md5(repr(self.model).encode('utf8')).hexdigest()
 
     def _compose(self, states_map):
         events_map = {}
-        for state_inst in states_map.itervalues():
-            for e, dst in state_inst.events.iteritems():
+        for state_inst in states_map.values():
+            for e, dst in state_inst.events.items():
                 events_map.setdefault(e, {}).update({
                     state_inst: states_map[dst]
                 })
@@ -186,7 +198,7 @@ class HSMEXMLParser(HSMEParserBase):
 
     @classmethod
     def parse_from_file(cls, chart):
-        if not isinstance(chart, types.FileType):
+        if not isinstance(chart, io.IOBase if PY3K else types.FileType):
             raise HSMEParserError('The chart is not a file instance')
 
         parser = cls(chart=chart.read())
@@ -199,7 +211,7 @@ class HSMEXMLParser(HSMEParserBase):
 
     @classmethod
     def parse_from_string(cls, chart):
-        if not isinstance(chart, types.StringTypes):
+        if not isinstance(chart, str if PY3K else types.StringTypes):
             raise HSMEParserError('The chart is not a string')
 
         parser = cls(chart=chart)

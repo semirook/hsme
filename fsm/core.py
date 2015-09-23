@@ -2,6 +2,7 @@
 import pickle
 import types
 from collections import namedtuple
+
 from fsm.parsers import HSMEStateChart
 from fsm.utils import ImportStringError, import_string
 
@@ -121,7 +122,7 @@ class HSMERunner(object):
 
     def load(self, model=None):
         self.clear()
-        if isinstance(model, basestring):
+        if isinstance(model, bytes):
             model = pickle.loads(model)
         if not isinstance(model, HSMEStateChart):
             raise HSMERunnerError(

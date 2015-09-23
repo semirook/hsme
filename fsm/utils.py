@@ -2,6 +2,10 @@
 import sys
 
 
+PY = sys.version_info
+PY3K = PY >= (3, 0, 0)
+
+
 class ImportStringError(ImportError):
     import_name = None
     exception = None
@@ -49,7 +53,6 @@ class ImportStringError(ImportError):
 
 
 def import_string(import_name, silent=False):
-    assert isinstance(import_name, basestring)
     import_name = str(import_name)
     try:
         if ':' in import_name:
@@ -58,7 +61,7 @@ def import_string(import_name, silent=False):
             module, obj = import_name.rsplit('.', 1)
         else:
             return __import__(import_name)
-        if isinstance(obj, unicode):
+        if not PY3K and isinstance(obj, unicode):
             obj = obj.encode('utf-8')
         try:
             return getattr(__import__(module, None, None, [obj]), obj)

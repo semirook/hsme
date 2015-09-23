@@ -1,8 +1,19 @@
 # coding: utf-8
 import os
+import sys
 import unittest
+
+
+PY = sys.version_info
+PY3K = PY >= (3, 0, 0)
+
+
+if PY3K:
+    from unittest import mock
+else:
+    import mock
+
 from functools import partial
-from mock import patch
 from fsm.core import (
     HSMERunner,
     ImpossibleEventError,
@@ -50,10 +61,10 @@ class TestBasics(unittest.TestCase):
 
 class TestCallbacks(unittest.TestCase):
 
-    @patch('tests.charts.basket_callbacks.on_change_in_basket_normal')
-    @patch('tests.charts.basket_callbacks.on_exit_in_recalculation')
-    @patch('tests.charts.basket_callbacks.on_change_in_recalculation')
-    @patch('tests.charts.basket_callbacks.on_enter_in_recalculation')
+    @mock.patch('tests.charts.basket_callbacks.on_change_in_basket_normal')
+    @mock.patch('tests.charts.basket_callbacks.on_exit_in_recalculation')
+    @mock.patch('tests.charts.basket_callbacks.on_change_in_recalculation')
+    @mock.patch('tests.charts.basket_callbacks.on_enter_in_recalculation')
     def test_initial_state(self, enter_mock, change_mock, exit_mock, change_b_mock):
         hsme = HSMERunner()
         xml_path = get_basket_xml_path()
