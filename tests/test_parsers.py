@@ -72,8 +72,8 @@ class TestXMLParser(TestCase):
         transitions = statechart['do_add_to_basket']
         self.assertTrue(len(transitions) == 2)
         self.assertSetEqual(
-            {x.name for x in transitions},
-            {'in_basket_normal', 'in_basket_empty'}
+            set([x.name for x in transitions]),
+            set(['in_basket_normal', 'in_basket_empty'])
         )
         for src, dst in transitions.items():
             if src.name == 'in_basket_normal':
