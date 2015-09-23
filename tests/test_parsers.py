@@ -27,14 +27,14 @@ class TestXMLParser(TestCase):
         self.assertEqual(table._init_state.name, 'in_basket_empty')
         statechart = table._statechart
 
-        events = {
+        events = set({
             'do_add_to_basket',
             'do_goto_in_basket_empty',
             'do_goto_in_basket_freeze',
             'do_goto_in_basket_normal',
             'do_remove_product',
             'do_unfreeze',
-        }
+        })
         self.assertSetEqual(set(statechart.keys()), events)
 
         transitions = statechart['do_goto_in_basket_empty']
