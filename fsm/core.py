@@ -1,25 +1,29 @@
 # coding: utf-8
-import pickle
-import types
+import json
+import time
+import calendar
 from collections import namedtuple
 
-from fsm.parsers import HSMEStateChart
-from fsm.utils import ImportStringError, import_string
+from fsm.parsers import HSMEStateChart, HSMEDictsParser
 
 
 class HSMERunnerError(Exception):
     pass
 
 
-class ImpossibleEventError(Exception):
+class HSMEWrongEventError(Exception):
     pass
 
 
-class UnregisteredEventError(Exception):
+class HSMEWrongTriggerError(HSMEWrongEventError):
     pass
 
 
-class StateConditionError(Exception):
+class HSMEUndefinedTriggerError(Exception):
+    pass
+
+
+class HSMEUndefinedActionError(Exception):
     pass
 
 
@@ -27,7 +31,7 @@ HSMEProxyObject = namedtuple(
     'HSMEProxyObject', [
         'fsm',
         'event',
-        'data',
+        'payload',
         'src',
         'dst',
     ]
@@ -36,22 +40,65 @@ HSMEProxyObject = namedtuple(
 
 class HSMERunner(object):
 
-    def __init__(self):
-        self.clear()
+    STATE_CHART_CLS = HSMEStateChart
+    STATE_CHART_PARSER = HSMEDictsParser
+
+    def __init__(
+        self,
+        trigger_source=None,
+        action_source=None,
+    ):
+        self.model = None
+        self.trigger_source = trigger_source
+        self.action_source = action_source
 
     def __getattribute__(self, name):
         if name in set([
             'datamodel',
+            'history',
             'in_state',
             'is_finished',
-            'is_initial',
             'save',
             'start',
-            'statechart_id',
         ]) and not self.is_loaded():
-            raise HSMERunnerError("Initialize machine first")
+            raise HSMERunnerError('Load machine first')
 
         return object.__getattribute__(self, name)
+
+    def __repr__(self):
+        if self.is_loaded():
+            return 'HSMERunner: {0}'.format(self.model.chart_id)
+        else:
+            return 'HSMERunner: empty'
+
+    def load(self, model=None, deserializer=None):
+        self.model = None
+
+        if not isinstance(model, self.STATE_CHART_CLS):
+            deserializer = deserializer or json.loads
+            model = deserializer(model)
+            model = self.STATE_CHART_CLS.as_obj(model)
+
+        if not isinstance(model, self.STATE_CHART_CLS):
+            raise HSMERunnerError(
+                'Invalid statechart format, '
+                'HSMEStateChart instance expected'
+            )
+
+        self.model = model
+
+        return self
+
+    def dump(self, serializer=None):
+        if not self.is_loaded():
+            raise HSMERunnerError('Load and start machine first')
+
+        serializer = serializer or json.dumps
+        return serializer(self.model.as_dict())
+
+    def parse(self, chart):
+        model = self.STATE_CHART_PARSER(chart).parse()
+        return self.load(model)
 
     def is_loaded(self):
         return self.model is not None
@@ -59,58 +106,57 @@ class HSMERunner(object):
     def is_started(self):
         return self.current_state is not None
 
-    def clear(self):
-        self.model = None
-
-    def start(self, data=None):
+    def start(self, payload=None):
         if self.is_started():
             return False
 
-        src = self.model._current_state
-        dst = self.model._init_state
+        src = self.model.current_state
+        dst = self.model.initial_state
         hsme_proxy = HSMEProxyObject(
             fsm=self,
-            event='__init__',
+            event=None,
             src=src,
             dst=dst,
-            data=data,
+            payload=payload,
         )
-        self._do_transition(hsme_proxy)
+        return self._do_transition(hsme_proxy)
 
-        return True
-
-    def send(self, event_name, data=None):
+    def send(self, event_name, payload=None):
         if not self.is_loaded() or not self.is_started():
-            raise HSMERunnerError("Initialize and start machine first")
+            raise HSMERunnerError('Load and start machine first')
 
         src = self.current_state
-        if event_name not in self.model._statechart:
-            raise UnregisteredEventError(
-                "Event %s is unregistered" % event_name
-            )
-        if not self.can_send(event_name):
-            raise ImpossibleEventError(
-                "Event %s is inappropriate in current state %s" % (
-                    event_name, src.name
+        if event_name not in self.model.statechart:
+            raise HSMEWrongEventError(
+                'Event {0} is unregistered'.format(
+                    repr(event_name)
                 )
             )
-        event_transition = self.model._statechart[event_name]
+        if not self.can_send(event_name):
+            raise HSMEWrongEventError(
+                'Event {0} is inappropriate in current state {1}'.format(
+                    repr(event_name), src.name
+                )
+            )
+        event_transition = self.model.statechart[event_name]
         dst = src in event_transition and event_transition[src]
-
         hsme_proxy = HSMEProxyObject(
             fsm=self,
             event=event_name,
-            data=data,
+            payload=payload,
             src=src,
             dst=dst,
         )
-        self._do_transition(hsme_proxy)
+        return self._do_transition(hsme_proxy)
 
     def can_send(self, event_name):
-        if not self.is_loaded() or event_name not in self.model._statechart:
+        if not self.is_loaded():
+            raise HSMERunnerError('Load machine first')
+
+        if event_name not in self.model.statechart:
             return False
 
-        event_transition = self.model._statechart[event_name]
+        event_transition = self.model.statechart[event_name]
 
         return self.current_state in event_transition
 
@@ -118,87 +164,84 @@ class HSMERunner(object):
         if self.is_loaded() and self.is_started():
             return self.current_state.events
         else:
-            raise HSMERunnerError("Initialize and start machine first")
-
-    def load(self, model=None):
-        self.clear()
-        if isinstance(model, bytes):
-            model = pickle.loads(model)
-        if not isinstance(model, HSMEStateChart):
-            raise HSMERunnerError(
-                'Invalid statechart format, '
-                'HSMEStateChart instance expected'
-            )
-        self.model = model
-
-        return self
-
-    def save(self):
-        return pickle.dumps(self.model)
+            raise HSMERunnerError('Load and start machine first')
 
     def in_state(self, state_name):
-        return self.current_state.name == state_name
+        if self.is_loaded() and self.is_started():
+            return self.current_state.name == state_name
+        else:
+            raise HSMERunnerError('Load and start machine first')
 
     def is_finished(self):
-        return (
-            bool(self.model._final_state)
-            and self.current_state == self.model._final_state
-        )
-
-    def is_initial(self):
-        return (
-            bool(self.current_state)
-            and self.current_state.is_initial
-        )
+        if self.is_loaded() and self.is_started():
+            return (
+                bool(self.model.final_states) and
+                self.current_state in self.model.final_states
+            )
+        else:
+            raise HSMERunnerError('Load and start machine first')
 
     @property
     def current_state(self):
-        return self.model._current_state if self.model else None
+        return self.model.current_state if self.model else None
 
     @property
-    def statechart_id(self):
-        return self.model._id
-
-    @property
-    def datamodel(self):
-        return self.model._datamodel
-
-    def _prepare_callback(self, callback, state, type_):
-        if not isinstance(callback, types.FunctionType):
-            try:
-                callback = import_string(callback)
-            except ImportStringError:
-                raise ImportError(
-                    'Callback "%s" for the state "%s::%s" not found' % (
-                        callback, state, type_
-                    )
-                )
-        return callback
+    def history(self):
+        if self.model.history:
+            chain = ' -> '.join(
+                '({0}:{1} @{2})'.format(h['state'], h['event'], h['timestamp'])
+                for h in self.model.history
+            )
+            return '{0} => {1}'.format(repr(self.model), chain)
+        else:
+            return '{0} => not started'.format(repr(self.model))
 
     def _do_transition(self, hsme_proxy):
-        if hsme_proxy.src:
-            src_callbacks = hsme_proxy.src.callbacks
-            if 'on_exit' in src_callbacks:
-                callback_exit = self._prepare_callback(
-                    src_callbacks['on_exit'],
-                    hsme_proxy.src.name, 'on_exit',
-                )
-                callback_exit(hsme_proxy)
+        dst = hsme_proxy.dst
+        if not dst:
+            return False
 
-        if hsme_proxy.dst:
-            dst_callbacks = hsme_proxy.dst.callbacks
-            if 'on_enter' in dst_callbacks:
-                callback_enter = self._prepare_callback(
-                    dst_callbacks['on_enter'],
-                    hsme_proxy.dst.name, 'on_enter',
-                )
-                callback_enter(hsme_proxy)
+        self.model.current_state = dst
 
-            self.model._current_state = hsme_proxy.dst
+        self.model.history.append({
+            'state': dst.name,
+            'event': hsme_proxy.event,
+            'timestamp': calendar.timegm(time.gmtime()),
+        })
 
-            if 'on_change' in dst_callbacks:
-                callback_change = self._prepare_callback(
-                    dst_callbacks['on_change'],
-                    hsme_proxy.dst.name, 'on_change',
+        if dst.action and self.action_source:
+            action = self.action_source(hsme_proxy, dst.action)
+            if not action:
+                raise HSMEUndefinedActionError(
+                    'Action source {0} is registered for the state {1} '
+                    'but not found'.format(
+                        repr(dst.action),
+                        repr(dst.name)
+                    )
                 )
-                callback_change(hsme_proxy)
+            action(hsme_proxy)
+
+        if dst.trigger and self.trigger_source:
+            trigger = self.trigger_source(hsme_proxy, dst.trigger)
+            if not trigger:
+                raise HSMEUndefinedTriggerError(
+                    'Trigger source {0} is registered for the state {1} '
+                    'but not found'.format(
+                        repr(dst.trigger),
+                        repr(dst.name)
+                    )
+                )
+            trigger_event = trigger(hsme_proxy)
+            if not self.can_send(trigger_event):
+                raise HSMEWrongTriggerError(
+                    'Event {0} produced by the trigger {1} '
+                    'is inappropriate in current state {2}'.format(
+                        repr(trigger_event),
+                        repr(trigger),
+                        repr(self.model.current_state),
+                    )
+                )
+
+            return self.send(trigger_event, hsme_proxy.payload)
+
+        return True
