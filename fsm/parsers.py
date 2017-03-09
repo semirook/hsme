@@ -1,14 +1,6 @@
 # coding: utf-8
-import os
-import io
-import sys
-import types
 import hashlib
-import xml.etree.ElementTree as ET
-
-
-PY = sys.version_info
-PY3K = PY >= (3, 0, 0)
+import collections
 
 
 class HSMEParserError(Exception):
@@ -43,11 +35,11 @@ class HSMEState(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, HSMEState)
-            and self.name == other.name
-            and self.events == other.events
-            and self.is_initial == other.is_initial
-            and self.is_final == other.is_final
+            isinstance(other, self.__class__) and
+            self.name == other.name and
+            self.events == other.events and
+            self.is_initial == other.is_initial and
+            self.is_final == other.is_final
         )
 
     @classmethod
@@ -97,11 +89,11 @@ class HSMEStateChart(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, HSMEStateChart)
-            and self.chart_id == other.chart_id
-            and self.initial_state == other.initial_state
-            and self.final_states == other.final_states
-            and self.statechart == other.statechart
+            isinstance(other, self.__class__) and
+            self.chart_id == other.chart_id and
+            self.initial_state == other.initial_state and
+            self.final_states == other.final_states and
+            self.statechart == other.statechart
         )
 
     @classmethod
@@ -155,25 +147,43 @@ class HSMEDictsParser(object):
 
     def __init__(self, chart=None):
         self.chart = chart or []
+        if not isinstance(self.chart, collections.Iterable):
+            raise HSMEParserError('Unexpected statechart object type')
 
     def get_chart_id(self, obj):
         return hashlib.md5(repr(obj).encode('utf8')).hexdigest()
 
     def parse(self):
         states_map = {}
-        initial_state = None
+        initial_states = []
         for state in self.chart:
+            if 'state' not in state:
+                raise HSMEParserError(
+                    'No state label found in definition {0}'.format(repr(state))
+                )
             state_id = state['state']
             state_inst = self.STATE_CLS(
                 name=state_id,
+                is_initial=state.get('is_initial', False),
                 events=state.get('events'),
                 trigger=state.get('trigger'),
                 action=state.get('action'),
-                is_initial=state.get('is_initial', False),
             )
             states_map[state_id] = state_inst
             if state_inst.is_initial:
-                initial_state = state_inst
+                initial_states.append(state_inst)
+
+        if not len(initial_states):
+            raise HSMEParserError(
+                'No initial state found, mark you entry point state'
+            )
+
+        if len(initial_states) > 1:
+            raise HSMEParserError(
+                'Initial state ambiguity, you can have only one entry point'
+            )
+
+        initial_state = initial_states[0]
 
         events_map = {}
         final_states = []

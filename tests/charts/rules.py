@@ -19,6 +19,44 @@ SIMPLE_RULES_CHART = [
 ]
 
 
+NO_INITIAL_RULES_CHART = [
+    {
+        'state': 'one',
+        'events': {
+            True: 'two',
+        },
+    },
+    {
+        'state': 'two',
+    },
+]
+
+
+TWO_INITIAL_RULES_CHART = [
+    {
+        'state': 'one',
+        'is_initial': True,
+        'events': {
+            True: 'two',
+        },
+    },
+    {
+        'state': 'two',
+        'is_initial': True,
+    },
+]
+
+
+BROKEN_RULES_CHART = [
+    {
+        'no_state': 'one',
+    },
+    {
+        'state': 'two',
+    },
+]
+
+
 RULES_CHART = [
     {
         'state': 'one',

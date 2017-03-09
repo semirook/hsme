@@ -41,7 +41,6 @@ HSMEProxyObject = namedtuple(
 class HSMERunner(object):
 
     STATE_CHART_CLS = HSMEStateChart
-    STATE_CHART_PARSER = HSMEDictsParser
 
     def __init__(
         self,
@@ -54,14 +53,19 @@ class HSMERunner(object):
 
     def __getattribute__(self, name):
         if name in set([
-            'datamodel',
-            'history',
-            'in_state',
-            'is_finished',
-            'save',
+            'dump',
+            'get_possible_transitions',
+            'send',
             'start',
         ]) and not self.is_loaded():
             raise HSMERunnerError('Load machine first')
+
+        if name in set([
+            'can_send',
+            'in_state',
+            'is_finished',
+        ]) and not self.is_started():
+            raise HSMERunnerError('Start machine first')
 
         return object.__getattribute__(self, name)
 
@@ -90,14 +94,12 @@ class HSMERunner(object):
         return self
 
     def dump(self, serializer=None):
-        if not self.is_loaded():
-            raise HSMERunnerError('Load and start machine first')
-
         serializer = serializer or json.dumps
         return serializer(self.model.as_dict())
 
-    def parse(self, chart):
-        model = self.STATE_CHART_PARSER(chart).parse()
+    def parse(self, chart, parser=None):
+        parser = parser or HSMEDictsParser
+        model = parser(chart).parse()
         return self.load(model)
 
     def is_loaded(self):
@@ -122,9 +124,6 @@ class HSMERunner(object):
         return self._do_transition(hsme_proxy)
 
     def send(self, event_name, payload=None):
-        if not self.is_loaded() or not self.is_started():
-            raise HSMERunnerError('Load and start machine first')
-
         src = self.current_state
         if event_name not in self.model.statechart:
             raise HSMEWrongEventError(
@@ -150,9 +149,6 @@ class HSMERunner(object):
         return self._do_transition(hsme_proxy)
 
     def can_send(self, event_name):
-        if not self.is_loaded():
-            raise HSMERunnerError('Load machine first')
-
         if event_name not in self.model.statechart:
             return False
 
@@ -161,25 +157,16 @@ class HSMERunner(object):
         return self.current_state in event_transition
 
     def get_possible_transitions(self):
-        if self.is_loaded() and self.is_started():
-            return self.current_state.events
-        else:
-            raise HSMERunnerError('Load and start machine first')
+        return self.current_state.events
 
     def in_state(self, state_name):
-        if self.is_loaded() and self.is_started():
-            return self.current_state.name == state_name
-        else:
-            raise HSMERunnerError('Load and start machine first')
+        return self.current_state.name == state_name
 
     def is_finished(self):
-        if self.is_loaded() and self.is_started():
-            return (
-                bool(self.model.final_states) and
-                self.current_state in self.model.final_states
-            )
-        else:
-            raise HSMERunnerError('Load and start machine first')
+        return (
+            bool(self.model.final_states) and
+            self.current_state in self.model.final_states
+        )
 
     @property
     def current_state(self):
