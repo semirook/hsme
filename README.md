@@ -1,6 +1,6 @@
 # HSME [![Build Status](https://travis-ci.org/semirook/hsme.png)](https://travis-ci.org/semirook/hsme)
 
-Another Python Finite State Machine implementation. Neat API, simple declaration, tested, documented.
+Handy State Machine Engine implementation. Neat API, simple declaration, tested, documented.
 
 ## What?
 
