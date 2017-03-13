@@ -5,15 +5,62 @@ import sqlite3
 from fsm.core import (
     HSMERunner,
     HSMERunnerError,
-    HSMEUndefinedActionError,
-    HSMEUndefinedTriggerError,
+    HSMEWrongTriggerError,
 )
 from .charts.rules import (
     RULES_CHART,
     SIMPLE_RULES_CHART,
-    event_trigger_source,
-    state_action_source,
+    MULTIPLE_TRIGGERS_RULES_CHART,
 )
+
+
+def insert_payload_action(proxy):
+    payload = proxy.payload
+    db = payload['db']
+    cur = db.cursor()
+    cur.execute(
+        'insert into people values (?, ?)',
+        ('anon', payload['user_id'])
+    )
+    db.commit()
+    cur.close()
+
+
+def event_trigger_source(proxy, trigger_id):
+    trigger = TRIGGERS_MAP.get(trigger_id)
+    return trigger(proxy)
+
+
+def multiple_event_trigger_source(proxy, trigger_ids):
+    event = False
+    for trigger_id in trigger_ids:
+        event_producer = TRIGGERS_MAP.get(trigger_id)
+        event = event_producer(proxy)
+        if not event:
+            continue
+        else:
+            return event
+
+    return event
+
+
+def state_action_source(proxy, action_id):
+    action = ACTIONS_MAP.get(action_id)
+    return action(proxy)
+
+
+TRIGGERS_MAP = {
+    1: lambda proxy: True,
+    2: lambda proxy: False,
+    3: lambda proxy: True,
+}
+
+
+ACTIONS_MAP = {
+    1: lambda proxy: proxy,
+    2: insert_payload_action,
+    3: insert_payload_action,
+}
 
 
 class TestHSMERunner(unittest.TestCase):
@@ -114,11 +161,28 @@ class TestHSMERunner(unittest.TestCase):
             self.assertTrue(rec['event'] == should_be_history[i]['event'])
 
     def test_wrong_triggers_flow(self):
-        hsme = HSMERunner(trigger_source=lambda proxy, i: {}.get(i))
+        hsme = HSMERunner(trigger_source=lambda proxy, i: 'wrong_event')
         hsme.parse(RULES_CHART)
 
-        with self.assertRaises(HSMEUndefinedTriggerError):
+        with self.assertRaises(HSMEWrongTriggerError):
             hsme.start()
+
+    def test_multiple_triggers_flow(self):
+        hsme = HSMERunner(
+            trigger_source=multiple_event_trigger_source,
+        )
+        hsme.parse(MULTIPLE_TRIGGERS_RULES_CHART)
+        hsme.start()
+
+        self.assertTrue(hsme.in_state('three'))
+
+        should_be_history = [
+            {'state': 'one', 'event': None},
+            {'state': 'three', 'event': True},
+        ]
+        for i, rec in enumerate(hsme.model.history):
+            self.assertTrue(rec['state'] == should_be_history[i]['state'])
+            self.assertTrue(rec['event'] == should_be_history[i]['event'])
 
     def test_actions_flow(self):
         hsme = HSMERunner(
@@ -141,13 +205,3 @@ class TestHSMERunner(unittest.TestCase):
         db.close()
 
         self.assertListEqual(action_result, [('anon', 42)])
-
-    def test_wrong_actions_flow(self):
-        hsme = HSMERunner(
-            trigger_source=event_trigger_source,
-            action_source=lambda proxy, i: {}.get(i),
-        )
-        hsme.parse(RULES_CHART)
-
-        with self.assertRaises(HSMEUndefinedActionError):
-            hsme.start()

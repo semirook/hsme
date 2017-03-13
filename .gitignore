@@ -1,6 +1,7 @@
-/build
-/dist
-/docs/build
-/.ropeproject
+_book
+build
+dist
+docs/build
+.ropeproject
 *.pyc
 *.pickle

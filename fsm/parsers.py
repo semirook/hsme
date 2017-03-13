@@ -156,6 +156,7 @@ class HSMEDictsParser(object):
     def parse(self):
         states_map = {}
         initial_states = []
+        final_states = []
         for state in self.chart:
             if 'state' not in state:
                 raise HSMEParserError(
@@ -172,6 +173,8 @@ class HSMEDictsParser(object):
             states_map[state_id] = state_inst
             if state_inst.is_initial:
                 initial_states.append(state_inst)
+            if state_inst.is_final:
+                final_states.append(state_inst)
 
         if not len(initial_states):
             raise HSMEParserError(
@@ -186,14 +189,11 @@ class HSMEDictsParser(object):
         initial_state = initial_states[0]
 
         events_map = {}
-        final_states = []
         for state_inst in states_map.values():
             for e, dst in state_inst.events.items():
                 events_map.setdefault(e, {}).update({
                     state_inst: states_map[dst]
                 })
-            if state_inst.is_final:
-                final_states.append(state_inst)
 
         model = self.STATE_CHART_CLS(
             chart_id=self.get_chart_id(events_map),
