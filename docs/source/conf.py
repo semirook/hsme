@@ -161,6 +161,3 @@ texinfo_documents = [
      author, 'HSME', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-

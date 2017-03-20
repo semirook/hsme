@@ -9,6 +9,9 @@ Handy State Machine Engine
 .. toctree::
    :maxdepth: 2
 
-.. autoclass:: fsm.core.HSMERunner
+.. automodule:: fsm.core
+   :members: HSMERunner, HSMERunnerError, 
+             HSMEWrongEventError, HSMEWrongTriggerError
+
+.. automodule:: fsm.parsers
    :members:
-   :special-members: __init__
