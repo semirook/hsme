@@ -2,6 +2,7 @@ _book
 build
 dist
 docs/build
+.cache
 .ropeproject
 *.pyc
 *.pickle

@@ -1,22 +1,28 @@
 # coding: utf-8
+import calendar
 import json
 import time
-import calendar
 from collections import namedtuple
 
 from fsm.parsers import HSMEStateChart, HSMEDictsParser
 
 
 class HSMERunnerError(Exception):
-    pass
+    """Raised if ``HSMERunner`` receives invalid data
+    or model-sensitive methods called before model load/start.
+    """
 
 
 class HSMEWrongEventError(Exception):
-    pass
+    """Raised if ``HSMERunner`` receives inappropriate transition event
+    for the current state.
+    """
 
 
 class HSMEWrongTriggerError(HSMEWrongEventError):
-    pass
+    """Raised if some trigger produces invalid or inappropriate
+    transition event inside some state and such a transition is impossible.
+    """
 
 
 HSMEProxyObject = namedtuple(
@@ -31,6 +37,18 @@ HSMEProxyObject = namedtuple(
 
 
 class HSMERunner(object):
+    """FSM (Finite State Machine) model (transition map) *runner*,
+    provides high-level API to work with declared states, makes transitions,
+    tracks transition history, etc.
+
+    :param trigger_source: the callback, that produces event for the
+        current state, can be defined and used to create self-transition
+        flow instead of manual external event sending.
+
+    :param action_source: the callback, that produces some side effect
+        inside related state. Something like logging, processing,
+        DB reads/writes, etc.
+    """
 
     STATE_CHART_CLS = HSMEStateChart
 
@@ -39,18 +57,6 @@ class HSMERunner(object):
         trigger_source=None,
         action_source=None,
     ):
-        """FSM (Finite State Machine) model (transition map) *runner*,
-        provides high-level API to work with declared states, makes transitions,
-        track transition history, etc.
-
-        :param trigger_source: the callback, that produces event for the
-            current state, can be defined and used to create self-transition
-            flow instead of manual external event sending.
-
-        :param action_source: the callback, that produces some side effect
-            inside related state. Something like logging, processing,
-            DB reads/writes, etc.
-        """
         self.model = None
         self.trigger_source = trigger_source
         self.action_source = action_source
